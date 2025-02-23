@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <localRepository>D:\repository</localRepository>
+
+    <mirrors>
+        <mirror>
+            <id>mirror</id>
+            <mirrorOf>central,!spring-milestones,!spring-snapshots</mirrorOf>
+            <name>mirror</name>
+            <url>https://maven.aliyun.com/nexus/content/groups/public</url>
+        </mirror>
+    </mirrors>
+
+    <profiles>
+        <profile>
+            <id>springio</id>
+            <repositories>
+                <repository>
+                    <id>spring-milestones</id>
+                    <name>Spring Milestones</name>
+                    <url>https://repo.spring.io/milestone</url>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>spring-snapshots</id>
+                    <name>Spring Snapshots</name>
+                    <url>https://repo.spring.io/snapshot</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+<activeProfiles>
+    <activeProfile>springio</activeProfile>
+</activeProfiles>
+</settings>

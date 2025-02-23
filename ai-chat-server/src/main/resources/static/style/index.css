@@ -1,0 +1,91 @@
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin: 0 auto;
+    width: 640px;
+    height: 800px;
+    position: relative;
+    top: 0;
+}
+
+.chat-container {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+}
+
+.chat-box {
+    width: 638px;
+    height: 32px;
+    margin: 0 auto;
+    border: 1px solid gray;
+    background-color: white;
+}
+
+.chat-box .combobox {
+    margin-left: 4px;
+    width: 130px;
+    border: none;
+    height: 100%;
+    vertical-align: top;
+}
+
+select {
+    border: none;
+    outline: none;
+}
+
+.chat-box input {
+    width: 448px;
+    height: 30px;
+    border: none;
+    outline: none;
+    margin: 0;
+    vertical-align: top;
+    padding-left: 10px;
+}
+
+.chat-box img {
+    width: 32px;
+    height: 32px;
+}
+
+.message-container {
+    width: 100%;
+    height: 760px;
+    overflow-y: auto;
+}
+
+.message {
+    width: 100%;
+    align-items: flex-start;
+    display: flex;
+    margin: 6px auto;
+}
+
+.message .icon {
+    width: 32px;
+    height: 32px;
+}
+
+.message .text-box {
+    width: 580px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    border-radius: 4px;
+    background-color: aliceblue;
+    margin-left: 6px;
+    font-size: small;
+    padding: 8px;
+}
+
+.message .think {
+    color: darkgray;
+    font-size: smaller;
+    font-style: italic;
+}
