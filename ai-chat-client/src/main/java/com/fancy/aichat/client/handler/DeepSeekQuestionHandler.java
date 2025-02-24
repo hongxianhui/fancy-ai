@@ -4,9 +4,8 @@ import org.fancy.aichat.common.Answer;
 import org.fancy.aichat.common.ChatPrompt;
 import org.fancy.aichat.common.Question;
 import org.fancy.aichat.common.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.ResourceUtils;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.ollama.api.OllamaApi;
@@ -22,8 +21,9 @@ import java.io.PrintWriter;
 public class DeepSeekQuestionHandler extends AbstractQuestionHandler {
     private final String MODEL_NAME = "deepseek-r1:1.5b";
 
-    protected ChatModel createChatModel() {
-        return OllamaChatModel.builder().ollamaApi(new OllamaApi()).build();
+    protected ChatClient createChatClient() {
+        OllamaChatModel chatModel = OllamaChatModel.builder().ollamaApi(new OllamaApi()).build();
+        return ChatClient.builder(chatModel).defaultSystem(ResourceUtils.getText("classpath:deepseek-default-system.txt")).build();
     }
 
     @Override

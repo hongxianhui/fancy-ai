@@ -89,9 +89,6 @@ public class SocketServer implements Runnable, InitializingBean {
         ChatUser user = (ChatUser) question.getUser();
         if (socket == null || socket.isClosed()) {
             logger.warn("Client is not available.");
-            if (question.getPrompt() != null && !question.getPrompt().isUser()) {
-                return;
-            }
             Answer answer = Answer.builder().user(user).type(Answer.TYPE_ANSWER).content(aiMsgFail).build();
             user.getSession().sendMessage(new TextMessage(Utils.serialize(answer)));
             return;

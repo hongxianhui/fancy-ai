@@ -1,80 +1,123 @@
-(function ($) {
+$(function () {
+    let lastTimestamp = 0;
+    let waitingMessageId = 0;
+    let receiveMessageId = 0;
+    let prompt = "ASK";
     let websocket = null;
-    let chatId = null;
 
-    $(document).ready(function () {
-        $(".container").css("top", (window.innerHeight - 800) / 2 + "px");
-        $(".chat-box img").bind("click", sendQuestion);
-        let websocket_ = new WebSocket("/ws");
-        websocket_.onopen = function (evt) {
-            websocket = websocket_;
-            chatId = Date.now();
-            newChat({type: "system", done: true, content: "代理层服务连接成功，尝试连接大模型适配层服务..."})
-            $("#message-waiting").appendTo($(".message-container")).show();
-        };
-        websocket_.onclose = function (evt) {
-            newChat({type: "answer", done: true, content: "服务器连接已断开，刷新页面重新连接。"})
-        };
-        websocket_.onerror = function (evt) {
-            newChat({type: "answer", done: true, content: "服务器报错了，赶快喊大神。"})
-        };
-        websocket_.onmessage = function (evt) {
-            const data = JSON.parse(evt.data);
-            const textBox = $("#answer-" + chatId + " .text-box");
-            if (!textBox.length && (data.content === "\n" || data.content === "\n\n")) {
-                return;
-            }
-            $("#message-waiting").hide();
-            if (textBox.length) {
-                $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(textBox);
-            } else {
-                newChat(data);
-            }
-            scrollDown();
-            if (data.done) {
-                $("#prompt-chat").prop("selected", true);
-                $("#chat-text").val("");
-            }
-        };
-        setupChatPrompt();
-        $(".chat-text").focus();
+    let websocket_ = new WebSocket("/ws");
+    websocket_.onopen = function (evt) {
+        websocket = websocket_;
+        $(createMessageElement('代理层服务连接成功，尝试连接大模型适配层服务...', false)).appendTo($("#messages"));
+        addWaitingMessage();
+    };
+    websocket_.onclose = function (evt) {
+        $(createMessageElement('服务器连接已断开，刷新页面重新连接。', false)).appendTo($("#messages"));
+    };
+    websocket_.onerror = function (evt) {
+        $(createMessageElement('服务器报错了，赶快喊大神起床查问题。', false)).appendTo($("#messages"));
+    };
+    websocket_.onmessage = function (evt) {
+        const data = JSON.parse(evt.data);
+        $(`#${waitingMessageId}`).remove();
+        let messageElement = $(`#${receiveMessageId}`);
+        if (!messageElement.length) {
+            messageElement = $(createMessageElement('', false));
+            messageElement.attr('id', receiveMessageId).appendTo($("#messages"));
+        }
+        $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+    };
+
+    function formatTime(timestamp) {
+        return new Date(timestamp).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function checkShowTime(currentTime) {
+        const FIVE_MINUTES = 5 * 60 * 1000;
+        if (!lastTimestamp || currentTime - lastTimestamp > FIVE_MINUTES) {
+            lastTimestamp = currentTime;
+            return true;
+        }
+        return false;
+    }
+
+    function createMessageElement(content, isSent) {
+        const currentTime = Date.now();
+        const timeHtml = checkShowTime(currentTime) ?
+            `<div class="center-time">${formatTime(currentTime)}</div>` : '';
+        return `
+                    ${timeHtml}
+                    <div class="message ${isSent ? 'sent' : 'received'}">
+                        <div class="content">${content}</div>
+                    </div>
+                `;
+    }
+
+    function sendMessage(text) {
+        const content = text || $('#message-input').val().trim();
+        if (!content) return;
+        // 添加用户消息
+        $('#messages').append(createMessageElement(content, true));
+        addWaitingMessage();
+        websocket.send(JSON.stringify({"prompt": prompt, "content": $('#message-input').val()}));
+        $('#message-input').val('');
+        receiveMessageId = `receive-${Date.now()}`;
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+    }
+
+    // 添加等待消息
+    function addWaitingMessage() {
+        waitingMessageId = `waiting-${Date.now()}`;
+        $('#messages').append(`
+            <div class="message received waiting" id="${waitingMessageId}">
+                <div class="loading-icon"></div>
+                <div class="loading-icon"></div>
+                <div class="loading-icon"></div>
+            </div>
+        `);
+    }
+
+    //渲染提示词列表
+    $.get("/prompts", function (result) {
+        $.each(result, function (key, value) {
+            $("<div>").addClass("preset-msg").text(value.prompt).appendTo($(".preset-menu")).click(function (e) {
+                $("#message-input").prop("placeholder", value.placeHolder).val("");
+                setTimeout(function () {
+                    prompt = value.id;
+                    $('.preset-menu').removeClass('show-menu');
+                }, 200);
+            });
+        })
+    })
+
+    $('#send-btn').click(function (e) {
+        if (!$(e.target).closest('.dropdown-arrow').length) {
+            sendMessage();
+        }
     });
 
-    function setupChatPrompt() {
-        $.get("/prompts", function (result) {
-            $.each(result, function (key, value) {
-                $("<option></option>").val(value.key).text(value.prompt).appendTo($(".combobox"));
-            })
-        })
-    }
+    $('.dropdown-arrow').click(function () {
+        $('.preset-menu').toggleClass('show-menu');
+    });
 
-    function scrollDown() {
-        const container = $(".message-container");
-        container.prop("scrollTop", container.prop("scrollHeight"));
-    }
+    $('.preset-msg').click(function () {
+        $('.preset-menu').removeClass('show-menu');
+    });
 
-    function sendQuestion() {
-        if (websocket.readyState !== WebSocket.OPEN) {
-            newChat({type: "answer", done: true, content: "服务器连接已断开，刷新页面重新连接。"})
-            return;
+    $(document).click(function (e) {
+        if (!$(e.target).closest('.send-wrapper').length) {
+            $('.preset-menu').removeClass('show-menu');
         }
-        const question = $("#chat-text");
-        if (question.val().trim() === "") {
-            return;
+    });
+
+    $('#message-input').keypress(function (e) {
+        if (e.which === 13) {
+            sendMessage();
+            return false;
         }
-        chatId = Date.now();
-        newChat({type: "question", content: question.val()});
-        $("#message-waiting").appendTo($(".message-container")).show();
-        websocket.send(JSON.stringify({"prompt": $(".combobox").val(), "content": question.val()}));
-        scrollDown();
-    }
-
-    function newChat(data) {
-        const template = $($("#chat").html());
-        template.children(".icon").attr("src", "images/" + (data.type === "question" ? "q" : "a") + ".jpg");
-        template.children(".text-box").append($("<span>").addClass("token").addClass(data.type).html(data.content));
-        return template.attr("id", (data.type === "think" ? "answer" : data.type) + "-" + chatId).appendTo($(".message-container"));
-    }
-
-})
-(jQuery);
+    });
+});

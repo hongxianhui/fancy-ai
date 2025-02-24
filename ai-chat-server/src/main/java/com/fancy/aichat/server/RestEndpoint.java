@@ -17,7 +17,8 @@ public class RestEndpoint {
     public List<Map<String, String>> prompts() {
         return Arrays.stream(ChatPrompt.values()).filter(ChatPrompt::isUser).map(chatPrompt -> {
             Map<String, String> map = new HashMap<>();
-            map.put("key", chatPrompt.getKey());
+            map.put("id", chatPrompt.name());
+            map.put("placeHolder", chatPrompt.getPlaceHolder());
             map.put("prompt", chatPrompt.getPrompt());
             return map;
         }).collect(Collectors.toList());

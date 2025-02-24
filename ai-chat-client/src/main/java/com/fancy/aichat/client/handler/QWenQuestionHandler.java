@@ -5,10 +5,10 @@ import jakarta.annotation.Resource;
 import org.fancy.aichat.common.ChatPrompt;
 import org.fancy.aichat.common.Question;
 import org.springframework.ai.ResourceUtils;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.ollama.OllamaChatModel;
@@ -34,9 +34,10 @@ public class QWenQuestionHandler extends AbstractQuestionHandler {
     private VectorStore vectorStore;
 
     @Override
-    protected ChatModel createChatModel() {
+    protected ChatClient createChatClient() {
         OllamaOptions chatOptions = OllamaOptions.builder().toolCallbacks(ToolCallbacks.from(tools.toArray())).build();
-        return OllamaChatModel.builder().ollamaApi(new OllamaApi()).defaultOptions(chatOptions).build();
+        OllamaChatModel chatModel = OllamaChatModel.builder().ollamaApi(new OllamaApi()).defaultOptions(chatOptions).build();
+        return ChatClient.builder(chatModel).defaultSystem(ResourceUtils.getText("classpath:qwen-default-system.txt")).defaultTools(tools).build();
     }
 
     @Override
