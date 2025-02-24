@@ -41,16 +41,17 @@ public abstract class AbstractQuestionHandler implements QuestionHandler {
             if (token.contains("<think>")) {
                 thinking[0] = true;
                 logger.info("Get answer stream cost {},", System.currentTimeMillis() - time);
-                fullAnswer.append(token);
                 return;
             }
             if (token.contains("</think>")) {
                 thinking[0] = false;
-                fullAnswer.append(token);
                 return;
             }
             if (fullAnswer.isEmpty() && "\n".equals(token)) {
                 return;
+            }
+            if ("\n\n".equals(token)) {
+                token = "\n";
             }
             fullAnswer.append(token);
             Answer.Builder builder = Answer.builder().user(question.getUser()).type(thinking[0] ? Answer.TYPE_THINK : Answer.TYPE_ANSWER).content(token);
