@@ -1,7 +1,7 @@
 package com.fancy.aichat.client.handler;
 
 import com.fancy.aichat.client.QuestionHandler;
-import com.fancy.aichat.client.tokenizer.ChatStreamTokenizer;
+import com.fancy.aichat.tokenizer.ChatStreamTokenizer;
 import org.fancy.aichat.common.Answer;
 import org.fancy.aichat.common.Question;
 import org.fancy.aichat.common.Utils;
