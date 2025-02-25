@@ -1,5 +1,7 @@
 package com.fancy.aichat.server;
 
+import com.fancy.aichat.server.user.ChatUser;
+import com.fancy.aichat.server.user.UserManager;
 import jakarta.annotation.Resource;
 import org.fancy.aichat.common.Answer;
 import org.fancy.aichat.common.Question;

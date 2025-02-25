@@ -1,5 +1,6 @@
-package com.fancy.aichat.server;
+package com.fancy.aichat.endpoint;
 
+import com.fancy.aichat.server.TTSServer;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.fancy.aichat.common.ChatPrompt;

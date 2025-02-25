@@ -1,4 +1,4 @@
-package com.fancy.aichat.server;
+package com.fancy.aichat.server.user;
 
 import org.fancy.aichat.common.User;
 import org.slf4j.Logger;

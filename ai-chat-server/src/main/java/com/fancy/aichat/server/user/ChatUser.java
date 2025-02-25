@@ -1,4 +1,4 @@
-package com.fancy.aichat.server;
+package com.fancy.aichat.server.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.fancy.aichat.common.User;

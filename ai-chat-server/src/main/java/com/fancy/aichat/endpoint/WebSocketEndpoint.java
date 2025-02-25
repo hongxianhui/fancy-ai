@@ -1,5 +1,8 @@
-package com.fancy.aichat.server;
+package com.fancy.aichat.endpoint;
 
+import com.fancy.aichat.server.user.ChatUser;
+import com.fancy.aichat.server.SocketServer;
+import com.fancy.aichat.server.user.UserManager;
 import jakarta.annotation.Resource;
 import org.fancy.aichat.common.ChatPrompt;
 import org.fancy.aichat.common.Question;
