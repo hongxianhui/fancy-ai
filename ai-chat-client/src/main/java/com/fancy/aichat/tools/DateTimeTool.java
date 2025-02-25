@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 @Component
-public class DateTimeTool implements Tools {
+public class DateTimeTool implements ChatTool {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Tool(description = "按时区获取当前日期和时间")

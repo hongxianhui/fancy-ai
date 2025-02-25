@@ -1,6 +1,6 @@
 package com.fancy.aichat.client.handler;
 
-import com.fancy.aichat.tools.Tools;
+import com.fancy.aichat.tools.ChatTool;
 import org.fancy.aichat.common.Question;
 import org.springframework.ai.ResourceUtils;
 import org.springframework.ai.chat.client.ChatClient;
@@ -27,7 +27,7 @@ public class QWenQuestionHandler extends AbstractQuestionHandler {
 
     private final ChatClient chatClient;
 
-    protected QWenQuestionHandler(VectorStore vectorStore, List<Tools> tools, ChatMemory chatMemory) {
+    protected QWenQuestionHandler(VectorStore vectorStore, List<ChatTool> tools, ChatMemory chatMemory) {
         OllamaOptions chatOptions = OllamaOptions.builder().toolCallbacks(ToolCallbacks.from(tools.toArray())).build();
         this.chatClient = ChatClient.builder(OllamaChatModel.builder().ollamaApi(new OllamaApi()).defaultOptions(chatOptions).build())
                 .defaultSystem("classpath:qwen-default-system.txt")

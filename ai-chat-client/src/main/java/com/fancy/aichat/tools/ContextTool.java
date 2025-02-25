@@ -7,7 +7,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ContextTool implements Tools {
+public class ContextTool implements ChatTool {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private User[] users = new User[0];
 
