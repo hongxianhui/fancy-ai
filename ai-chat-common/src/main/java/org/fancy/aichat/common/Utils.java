@@ -2,6 +2,7 @@ package org.fancy.aichat.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,6 +11,10 @@ import java.util.concurrent.TimeUnit;
 public class Utils {
     private static final ScheduledExecutorService threadPool = Executors.newScheduledThreadPool(10);
     private static final ObjectMapper mapper = new ObjectMapper();
+
+    static {
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    }
 
     public static void submit(Runnable runnable) {
         threadPool.submit(runnable);

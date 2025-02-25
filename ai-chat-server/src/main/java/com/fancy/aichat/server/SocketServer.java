@@ -1,5 +1,6 @@
 package com.fancy.aichat.server;
 
+import jakarta.annotation.Resource;
 import org.fancy.aichat.common.Answer;
 import org.fancy.aichat.common.Question;
 import org.fancy.aichat.common.Utils;
@@ -10,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 
-import javax.annotation.Resource;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -31,6 +31,8 @@ public class SocketServer implements Runnable, InitializingBean {
 
     @Resource
     private UserManager userManager;
+    @Resource
+    private TTSServer ttsServer;
 
     private Socket socket;
     private ServerSocket serverSocket;
@@ -68,20 +70,29 @@ public class SocketServer implements Runnable, InitializingBean {
         BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         String line;
         while ((line = reader.readLine()) != null) {
-            Answer answer = Utils.deserialize(line, Answer.class);
-            if (Answer.TYPE_KEEPALIVE.equals(answer.getType())) {
-                logger.info("Got keepalive signal from client {}", socket.getInetAddress().getHostAddress());
-                continue;
+            try {
+                Answer answer = Utils.deserialize(line, Answer.class);
+                if (Answer.TYPE_KEEPALIVE.equals(answer.getType())) {
+                    logger.info("Got keepalive signal from client {}", socket.getInetAddress().getHostAddress());
+                    continue;
+                }
+                ChatUser user = userManager.updateUser(answer.getUser());
+                if (user == null) {
+                    logger.warn("User session {} is closed.", answer.getUser().getUserId());
+                    continue;
+                }
+                if (Answer.TYPE_SPEECH.equals(answer.getType())) {
+                    ttsServer.transform(user.getUserId(), answer.getContent());
+                    continue;
+                }
+                if (answer.isDone()) {
+                    ttsServer.done(user.getUserId());
+                    logger.info("Answer is completed for user {}", user.getUserId());
+                }
+                user.getSession().sendMessage(new TextMessage(line));
+            } catch (IOException e) {
+                logger.error("Server: connection failed, waiting client re-connect", e);
             }
-            ChatUser user = userManager.updateUser(answer.getUser());
-            if (user == null) {
-                logger.warn("User session {} is closed.", answer.getUser().getUserId());
-                continue;
-            }
-            if (answer.isDone()) {
-                logger.info("Answer is completed for user {}", user.getUserId());
-            }
-            user.getSession().sendMessage(new TextMessage(line));
         }
     }
 

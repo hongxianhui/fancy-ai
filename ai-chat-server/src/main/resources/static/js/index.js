@@ -4,8 +4,10 @@ $(function () {
     let receiveMessageId = 0;
     let prompt = "ASK";
     let websocket = null;
-
     let websocket_ = new WebSocket("/ws");
+    let userId = 0;
+    const audio = document.getElementById('audio');
+
     websocket_.onopen = function (evt) {
         websocket = websocket_;
         $(createMessageElement('代理层服务连接成功，尝试连接大模型适配层服务...', false)).appendTo($("#messages"));
@@ -19,6 +21,7 @@ $(function () {
     };
     websocket_.onmessage = function (evt) {
         const data = JSON.parse(evt.data);
+        userId = data.user.userId;
         $(`#${waitingMessageId}`).remove();
         let messageElement = $(`#${receiveMessageId}`);
         if (!messageElement.length) {
@@ -67,6 +70,8 @@ $(function () {
         $('#message-input').val('');
         receiveMessageId = `receive-${Date.now()}`;
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
+        $(audio).attr("src", "/tts/" + userId);
+        audio.play();
     }
 
     // 添加等待消息

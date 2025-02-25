@@ -1,9 +1,12 @@
 package org.fancy.aichat.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Answer {
     public static final String TYPE_THINK = "think";
     public static final String TYPE_ANSWER = "answer";
     public static final String TYPE_KEEPALIVE = "keepalive";
+    public static final String TYPE_SPEECH = "speech";
 
     private User user;
     private String type;
@@ -73,4 +76,5 @@ public class Answer {
     public void setDone(boolean done) {
         this.done = done;
     }
+
 }

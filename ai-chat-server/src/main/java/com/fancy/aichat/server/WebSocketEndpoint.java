@@ -1,5 +1,6 @@
 package com.fancy.aichat.server;
 
+import jakarta.annotation.Resource;
 import org.fancy.aichat.common.ChatPrompt;
 import org.fancy.aichat.common.Question;
 import org.fancy.aichat.common.User;
@@ -12,7 +13,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
-import javax.annotation.Resource;
 
 @Component
 public class WebSocketEndpoint extends AbstractWebSocketHandler {
