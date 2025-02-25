@@ -1,4 +1,4 @@
-package com.fancy.aichat.client.tts;
+package com.fancy.aichat.client.tokenizer;
 
 import java.util.Set;
 
