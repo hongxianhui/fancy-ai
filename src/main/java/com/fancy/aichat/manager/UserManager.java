@@ -1,6 +1,6 @@
 package com.fancy.aichat.manager;
 
-import com.fancy.aichat.common.User;
+import com.fancy.aichat.objects.User;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -44,15 +44,6 @@ public class UserManager {
             }
         }
         return null;
-    }
-
-    public User updateUser(User user) {
-        User localUser = getUser(user.getUserId());
-        if (localUser == null) {
-            return null;
-        }
-        localUser.setModel(user.getModel());
-        return localUser;
     }
 
     public User getUser(String userId) {

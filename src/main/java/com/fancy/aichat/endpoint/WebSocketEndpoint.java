@@ -1,10 +1,10 @@
 package com.fancy.aichat.endpoint;
 
 import com.fancy.aichat.client.QuestionHandler;
-import com.fancy.aichat.common.Answer;
-import com.fancy.aichat.common.Question;
-import com.fancy.aichat.common.User;
-import com.fancy.aichat.common.Utils;
+import com.fancy.aichat.objects.Answer;
+import com.fancy.aichat.objects.Question;
+import com.fancy.aichat.objects.User;
+import com.fancy.aichat.objects.Utils;
 import com.fancy.aichat.manager.UserManager;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class WebSocketEndpoint extends AbstractWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         logger.info("websocket session established , id is {}", session.getId());
         User user = userManager.userConnected(session);
-        Answer answer = Answer.builder().user(user).content(ResourceUtils.getText("classpath:constant/welcome.html")).done().build();
+        Answer answer = Answer.builder().user(user).content(ResourceUtils.getText("classpath:constant/welcome.html")).done(true).build();
         session.sendMessage(new TextMessage(Utils.serialize(answer)));
     }
 
@@ -44,26 +44,16 @@ public class WebSocketEndpoint extends AbstractWebSocketHandler {
         Question question = Utils.deserialize(message.getPayload(), Question.class);
         question.setUser(userManager.getUser(session.getId()));
         logger.info("Question: {}", Utils.serialize(question));
-        handleQuestion(question);
+        for (QuestionHandler handler : questionHandlers) {
+            if (handler.handle(question)) {
+                break;
+            }
+        }
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         logger.error("Websocket failed.", exception);
-    }
-
-    private void handleQuestion(Question question) {
-        for (QuestionHandler handler : questionHandlers) {
-            if (handler.support(question)) {
-                try {
-                    handler.handle(question);
-                    return;
-                } catch (Exception e) {
-                    logger.error("Client: handle question failed.", e);
-                }
-            }
-        }
-        Answer answer = Answer.builder().user(question.getUser()).content("调用的模型不存在：" + question.getUser().getModel()).done().build();
     }
 
 }

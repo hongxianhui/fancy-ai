@@ -105,7 +105,7 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 150px;
+    width: 200px;
     margin-bottom: 8px;
     z-index: 10;
 }
@@ -145,7 +145,7 @@ body {
     display: none;
 }
 
-.content{
+.content {
     white-space: pre-wrap;
 }
 
@@ -154,6 +154,30 @@ body {
     font-size: 12px;
     line-height: 12px;
     font-style: italic;
+}
+
+.message .usage {
+    color: #333;
+    display: block;
+    font-size: 12px;
+    height: 16px;
+    line-height: 16px;
+    padding-left: 20px;
+    float: right;
+    clear: both;
+    background: url("/images/cost.png") no-repeat left top;
+    background-size: 16px 16px;
+}
+
+.message .tool {
+    font-size: 14px;
+    line-height: 14px;
+    font-style: italic;
+}
+
+.message .splitter {
+    display: block;
+    height: 6px;
 }
 
 .loading-icon {
@@ -166,7 +190,13 @@ body {
 }
 
 @keyframes blink {
-    0% { opacity: 1; }
-    50% { opacity: 0; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
 }

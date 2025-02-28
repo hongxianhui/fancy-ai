@@ -2,17 +2,16 @@ package com.fancy.aichat.client.tools;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class AddKnowledgeTool implements ChatTool {
+public class KnowledgeTool implements ChatTool {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final String knowledge;
 
-    public AddKnowledgeTool(String knowledge) {
+    public KnowledgeTool(String knowledge) {
         this.knowledge = knowledge;
     }
 

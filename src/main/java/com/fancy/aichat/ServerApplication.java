@@ -9,6 +9,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -41,6 +43,19 @@ public class ServerApplication implements WebSocketConfigurer {
     @Bean
     public ChatMemory chatMemory() {
         return new InMemoryChatMemory();
+    }
+
+    @Bean
+    public AsyncTaskExecutor chatThreadPoolTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setThreadNamePrefix("chatThreadPool-");
+        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(5);
+        executor.setQueueCapacity(100);
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
+        executor.initialize();
+        return executor;
     }
 
 }

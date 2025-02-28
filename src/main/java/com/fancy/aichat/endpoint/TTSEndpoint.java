@@ -1,7 +1,8 @@
-package com.fancy.aichat.server;
+package com.fancy.aichat.endpoint;
 
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesizer;
+import com.fancy.aichat.objects.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,20 +14,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class TTSServer {
-    private static final Logger logger = LoggerFactory.getLogger(TTSServer.class);
+public class TTSEndpoint {
+    private static final Logger logger = LoggerFactory.getLogger(TTSEndpoint.class);
 
-    @Value("sk-d99cc195827a4ae395d70863c035313a")
+    @Value("${spring.ai.dashscope.api-key}")
     private String apiKey;
-    private final SpeechSynthesizer synthesizer = new SpeechSynthesizer();
+    @Value("${spring.ai.dash-scope.audio.options.model}")
+    private String model;
 
+    private final SpeechSynthesizer synthesizer = new SpeechSynthesizer();
     private final Map<String, OutputStream> streams = new HashMap<>();
 
     public void stream(String userId, OutputStream out) {
         streams.put(userId, out);
     }
 
-    public void transform(String userId, String content) {
+    public void transform(User user, String content) {
+        String userId = user.getUserId();
         OutputStream outputStream = streams.get(userId);
         if (outputStream == null) {
             logger.warn("stream for user {} not found", userId);
@@ -34,7 +38,7 @@ public class TTSServer {
         }
         SpeechSynthesisParam param = SpeechSynthesisParam.builder()
                 .apiKey(apiKey)
-                .model("sambert-zhixiang-v1")
+                .model(model)
                 .sampleRate(44100)
                 .text(content)
                 .build();
@@ -49,12 +53,11 @@ public class TTSServer {
         }
     }
 
-    public void done(String userId) throws IOException {
+    public void done(String userId) {
         OutputStream outputStream = streams.get(userId);
         if (outputStream == null) {
             return;
         }
-        outputStream.close();
         streams.remove(userId);
     }
 

@@ -21,12 +21,17 @@ public class ChatStreamTokenizer implements StreamTokenizer {
 
         for (char c : cleanChunk.toCharArray()) {
             buffer.append(c);
-            if (CN_PUNCTUATION.contains(c) && output.length() >= minLength) {
+            if (CN_PUNCTUATION.contains(c) && buffer.length() >= minLength) {
                 output.append(buffer).append('\n');
                 buffer.setLength(0);
             }
         }
         return output.toString().trim();
+    }
+
+    @Override
+    public String getRemaining() {
+        return buffer.toString().trim();
     }
 
 }

@@ -10,7 +10,7 @@ $(function () {
 
     websocket_.onopen = function (evt) {
         websocket = websocket_;
-        $(createMessageElement('代理层服务连接成功，尝试连接大模型适配层服务...', false)).appendTo($("#messages"));
+        $(createMessageElement('后端服务连接成功!', false)).appendTo($("#messages"));
         addWaitingMessage();
     };
     websocket_.onclose = function (evt) {
@@ -28,7 +28,12 @@ $(function () {
             messageElement = $(createMessageElement('', false));
             messageElement.attr('id', receiveMessageId).appendTo($("#messages"));
         }
+        data.content = data.content.replace("\n\n", "<span class='token splitter'></span>");
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
+        if (data.usage) {
+            $("<span>").addClass("token").addClass("splitter").appendTo(messageElement.children(".content"));
+            $("<span>").addClass("token").addClass("usage").text(data.usage.cost + "分").appendTo(messageElement.children(".content"));
+        }
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
     };
 
@@ -70,8 +75,8 @@ $(function () {
         $('#message-input').val('');
         receiveMessageId = `receive-${Date.now()}`;
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
-        // $(audio).attr("src", "/tts/" + userId);
-        // audio.play();
+        $(audio).attr("src", "/tts/" + userId);
+        audio.play();
     }
 
     // 添加等待消息
@@ -89,8 +94,8 @@ $(function () {
     //渲染提示词列表
     $.get("/prompts", function (result) {
         $.each(result, function (key, value) {
-            $("<div>").addClass("preset-msg").text(value.prompt).appendTo($(".preset-menu")).click(function (e) {
-                $("#message-input").prop("placeholder", value.placeHolder).val("");
+            $("<div>").addClass("preset-msg").text(value).appendTo($(".preset-menu")).click(function (e) {
+                $("#message-input").val("调用函数，" + value);
                 setTimeout(function () {
                     prompt = value.id;
                     $('.preset-menu').removeClass('show-menu');

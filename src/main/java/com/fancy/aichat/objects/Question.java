@@ -1,8 +1,22 @@
-package com.fancy.aichat.common;
+package com.fancy.aichat.objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Setter
+@Getter
 public class Question {
+    public static final String META_NO_THINK = "NO_THINK";
+    public static final String META_IS_THINKING = "IS_THINKING";
+
     private User user;
     private String content;
+    @JsonIgnore
+    private Map<String, Object> metadata = new HashMap<>();
 
     public static Builder builder() {
         return new Builder();
@@ -26,19 +40,4 @@ public class Question {
         }
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
 }
