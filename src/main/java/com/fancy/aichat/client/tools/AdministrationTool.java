@@ -15,28 +15,6 @@ import java.util.List;
 public class AdministrationTool implements ChatTool {
     protected final static Logger logger = LoggerFactory.getLogger(AdministrationTool.class);
 
-    @Description("该函数用来激活权限")
-    public static String activeMasterUser(@ToolParam(description = "口令或者密码的值") String password, ToolContext context) {
-        Question question = (Question) context.getContext().get("question");
-        String masterPassword = (String) context.getContext().get("masterPassword");
-        logger.info("Tool called activeMasterUser, userId={}, password={}", question.getUser().getUserId(), password);
-        if (!masterPassword.equals(password)) {
-            return "口令不正确。";
-        }
-        question.getUser().setAdmin(true);
-        return "权限已激活。";
-    }
-
-    @Description("根据用户ID查询权限是否已激活")
-    public static String queryMaster(ToolContext context) {
-        Question question = (Question) context.getContext().get("question");
-        logger.info("Tool called queryMaster, user={}", question.getUser().getUserId());
-        if (question.getUser().isAdmin()) {
-            return "权限已激活。";
-        }
-        return "您还没有激活权限。";
-    }
-
     @Description("查询系统在线用户信息")
     public static String getUserInfo(ToolContext context) {
         logger.info("Tool called: getUserInfo");
@@ -54,7 +32,7 @@ public class AdministrationTool implements ChatTool {
     public static String enableVoice(ToolContext context) {
         logger.info("Tool called: enableVoice");
         Question question = (Question) context.getContext().get("question");
-        if (!question.getUser().isAdmin()) {
+        if (question.getUser().getApiKey() != null) {
             return "站长囊中羞涩，匿名用户无法开启语音朗读功能。";
         }
         question.getUser().getMetadata().put(User.META_VOICE, true);

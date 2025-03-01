@@ -1,25 +1,23 @@
 $(function () {
+    const audio = document.getElementById('audio');
     let lastTimestamp = 0;
     let waitingMessageId = 0;
     let receiveMessageId = 0;
     let prompt = "ASK";
-    let websocket = null;
-    let websocket_ = new WebSocket("/ws");
     let userId = 0;
-    const audio = document.getElementById('audio');
+    let websocket = new WebSocket("/ws?" + window.location.search);
 
-    websocket_.onopen = function (evt) {
-        websocket = websocket_;
+    websocket.onopen = function (evt) {
         $(createMessageElement('后端服务连接成功!', false)).appendTo($("#messages"));
         addWaitingMessage();
     };
-    websocket_.onclose = function (evt) {
+    websocket.onclose = function (evt) {
         $(createMessageElement('服务器连接已断开，刷新页面重新连接。', false)).appendTo($("#messages"));
     };
-    websocket_.onerror = function (evt) {
+    websocket.onerror = function (evt) {
         $(createMessageElement('服务器报错了，赶快喊大神起床查问题。', false)).appendTo($("#messages"));
     };
-    websocket_.onmessage = function (evt) {
+    websocket.onmessage = function (evt) {
         const data = JSON.parse(evt.data);
         userId = data.user.userId;
         $(`#${waitingMessageId}`).remove();
@@ -28,7 +26,7 @@ $(function () {
             messageElement = $(createMessageElement('', false));
             messageElement.attr('id', receiveMessageId).appendTo($("#messages"));
         }
-        data.content = data.content.replace("\n\n", "<span class='token splitter'></span>");
+        data.content = data.content.replace(/\n\n/g, "<span class='token splitter'></span>");
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
         if (data.usage) {
             $("<span>").addClass("token").addClass("splitter").appendTo(messageElement.children(".content"));

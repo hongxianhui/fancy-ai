@@ -6,14 +6,14 @@ import com.alibaba.dashscope.aigc.generation.GenerationResult;
 import com.alibaba.dashscope.aigc.generation.GenerationUsage;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.Role;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.fancy.aichat.client.QuestionHandler;
-import com.fancy.aichat.client.tokenizer.ChatStreamTokenizer;
-import com.fancy.aichat.endpoint.TTSEndpoint;
+import com.fancy.aichat.client.tts.ChatStreamTokenizer;
+import com.fancy.aichat.client.tts.TTSGenerator;
 import com.fancy.aichat.objects.*;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -26,11 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class APIQuestionHandler implements QuestionHandler {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${spring.ai.dashscope.api-key}")
-    private String apiKey;
-
     @Resource
-    private TTSEndpoint ttsEndpoint;
+    private TTSGenerator ttsGenerator;
 
     private final Generation generation = new Generation();
 
@@ -49,7 +46,7 @@ public abstract class APIQuestionHandler implements QuestionHandler {
         return List.of(Message.builder().role(Role.USER.getValue()).content(question.getContent()).build());
     }
 
-    private GenerationParam getGenerationParam(Question question) {
+    private GenerationParam getGenerationParam(Question question) throws NoApiKeyException {
         List<Message> messages = new ArrayList<>();
         List<Message> systemMessage = getSystemMessage(question);
         List<Message> userMessages = getUserMessages(question);
@@ -58,7 +55,7 @@ public abstract class APIQuestionHandler implements QuestionHandler {
         }
         messages.addAll(userMessages);
         GenerationParam.GenerationParamBuilder<?, ?> builder = GenerationParam.builder()
-                .apiKey(apiKey)
+                .apiKey(Utils.getApiKey(question.getUser()))
                 .model(getModelName())
                 .messages(messages)
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
@@ -75,16 +72,14 @@ public abstract class APIQuestionHandler implements QuestionHandler {
         }
         logger.info("Handler: {}, Question: {}", getClass().getName(), Utils.serialize(question));
         WebSocketSession output = user.getSession();
-        if (!user.isAdmin()) {
-            Answer answer = Answer.builder().content("站长资金有限，匿名用户无法调用付费线上大模型。").done(true).build();
-            output.sendMessage(new TextMessage(Utils.serialize(answer)));
-            return true;
-        }
         question.getMetadata().put(Question.META_IS_THINKING, true);
         ChatStreamTokenizer tokenizer = new ChatStreamTokenizer(10);
         AtomicInteger voiceTokens = new AtomicInteger();
         generation.streamCall(getGenerationParam(question)).forEach(token -> {
             try {
+                if (!output.isOpen()) {
+                    return;
+                }
                 Answer answer = getAnswerOnStream(token, question);
                 if (answer == null) {
                     return;
@@ -92,14 +87,14 @@ public abstract class APIQuestionHandler implements QuestionHandler {
                 if (Boolean.TRUE.equals(question.getUser().getMetadata().get(User.META_VOICE))) {
                     String sentence = tokenizer.tokenize(answer.getContent());
                     if (StringUtils.hasText(sentence)) {
-                        ttsEndpoint.transform(user, sentence);
+                        ttsGenerator.transform(user, sentence);
                         voiceTokens.addAndGet(sentence.length());
                     }
                 }
                 if (answer.isDone()) {
                     String remaining = tokenizer.getRemaining();
                     if (StringUtils.hasText(remaining)) {
-                        ttsEndpoint.transform(user, remaining);
+                        ttsGenerator.transform(user, remaining);
                         voiceTokens.addAndGet(remaining.length());
                     }
                     GenerationUsage usage = token.getUsage();
@@ -108,7 +103,7 @@ public abstract class APIQuestionHandler implements QuestionHandler {
                             .promptTokens(usage.getTotalTokens())
                             .voiceTokens(voiceTokens.get()).build();
                     answer.setUsage(chatUsage);
-                    ttsEndpoint.done(user.getUserId());
+                    ttsGenerator.done(user.getUserId());
                     logger.info("Answer complete, cost: {}", Utils.serialize(chatUsage));
                 }
                 output.sendMessage(new TextMessage(Utils.serialize(answer)));

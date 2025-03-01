@@ -15,7 +15,8 @@ public class User {
 
     private String userId;
     private String model;
-    private boolean admin;
+    @JsonIgnore
+    private String apiKey;
     @JsonIgnore
     private WebSocketSession session;
     @JsonIgnore

@@ -1,4 +1,4 @@
-package com.fancy.aichat.client.tokenizer;
+package com.fancy.aichat.client.tts;
 
 import com.fancy.aichat.client.StreamTokenizer;
 

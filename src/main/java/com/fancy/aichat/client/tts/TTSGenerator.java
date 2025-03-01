@@ -1,8 +1,10 @@
-package com.fancy.aichat.endpoint;
+package com.fancy.aichat.client.tts;
 
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesizer;
+import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.fancy.aichat.objects.User;
+import com.fancy.aichat.objects.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-public class TTSEndpoint {
-    private static final Logger logger = LoggerFactory.getLogger(TTSEndpoint.class);
+public class TTSGenerator {
+    private static final Logger logger = LoggerFactory.getLogger(TTSGenerator.class);
 
-    @Value("${spring.ai.dashscope.api-key}")
-    private String apiKey;
     @Value("${spring.ai.dash-scope.audio.options.model}")
     private String model;
 
@@ -29,7 +29,7 @@ public class TTSEndpoint {
         streams.put(userId, out);
     }
 
-    public void transform(User user, String content) {
+    public void transform(User user, String content) throws NoApiKeyException {
         String userId = user.getUserId();
         OutputStream outputStream = streams.get(userId);
         if (outputStream == null) {
@@ -37,7 +37,7 @@ public class TTSEndpoint {
             return;
         }
         SpeechSynthesisParam param = SpeechSynthesisParam.builder()
-                .apiKey(apiKey)
+                .apiKey(Utils.getApiKey(user))
                 .model(model)
                 .sampleRate(44100)
                 .text(content)

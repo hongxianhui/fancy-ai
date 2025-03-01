@@ -27,7 +27,7 @@ public class DeepSeekR1QuestionHandler extends APIQuestionHandler {
     @Override
     protected List<Message> getUserMessages(Question question) {
         List<Message> messages = new ArrayList<>();
-        messages.add(Message.builder().role(Role.USER.getValue())
+        messages.add(Message.builder().role(Role.SYSTEM.getValue())
                 .content(ResourceUtils.getText("classpath:prompt/deepseek-identity.txt"))
                 .build());
         messages.addAll(super.getUserMessages(question));

@@ -24,10 +24,6 @@ public class QWenPlusQuestionHandler extends APIQuestionHandler {
         return MODEL_NAME;
     }
 
-    public QWenPlusQuestionHandler(ChatClient.Builder modelBuilder) {
-
-    }
-
     @Override
     protected List<Message> getSystemMessage(Question question) {
         return List.of(Message.builder().role(Role.SYSTEM.getValue())
