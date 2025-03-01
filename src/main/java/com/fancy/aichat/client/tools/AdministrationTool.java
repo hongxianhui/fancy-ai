@@ -32,11 +32,8 @@ public class AdministrationTool implements ChatTool {
     public static String enableVoice(ToolContext context) {
         logger.info("Tool called: enableVoice");
         Question question = (Question) context.getContext().get("question");
-        if (question.getUser().getApiKey() != null) {
-            return "站长囊中羞涩，匿名用户无法开启语音朗读功能。";
-        }
         question.getUser().getMetadata().put(User.META_VOICE, true);
-        return "语音朗读已开启。";
+        return "语音朗读功能已开启。";
     }
 
     @Description("关闭语音功能")
@@ -44,6 +41,6 @@ public class AdministrationTool implements ChatTool {
         logger.info("Tool called: disableVoice");
         Question question = (Question) context.getContext().get("question");
         question.getUser().getMetadata().put(User.META_VOICE, false);
-        return "语音朗读已关闭。";
+        return "语音朗读功能已关闭。";
     }
 }

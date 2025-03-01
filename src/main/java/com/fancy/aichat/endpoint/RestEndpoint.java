@@ -39,8 +39,8 @@ public class RestEndpoint {
     @GetMapping("/tts/{userId}")
     public ResponseEntity<StreamingResponseBody> tts(@PathVariable final String userId) {
         User user = userManager.getUser(userId);
-        if (user == null || user.getApiKey() != null || !Boolean.TRUE.equals(user.getMetadata().get(User.META_VOICE))) {
-            return null;
+        if (user == null || !Boolean.TRUE.equals(user.getMetadata().get(User.META_VOICE))) {
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok().contentType(new MediaType("audio", "wav"))
                 .body(outputStream -> {

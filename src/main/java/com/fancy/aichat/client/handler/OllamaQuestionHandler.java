@@ -1,8 +1,6 @@
 package com.fancy.aichat.client.handler;
 
 import com.fancy.aichat.client.QuestionHandler;
-import com.fancy.aichat.client.StreamTokenizer;
-import com.fancy.aichat.client.tts.ChatStreamTokenizer;
 import com.fancy.aichat.client.tools.AdministrationTool;
 import com.fancy.aichat.client.tools.ChatTool;
 import com.fancy.aichat.client.tools.KnowledgeTool;
@@ -20,7 +18,6 @@ import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -42,9 +39,6 @@ public class OllamaQuestionHandler implements QuestionHandler, InitializingBean 
 
     private ChatClient chatClient;
 
-    @Value("${ai.master.password}")
-    private String masterPassword;
-
     @Override
     public void afterPropertiesSet() {
         List<ToolCallback> toolCallbacks = new ArrayList<>();
@@ -65,7 +59,6 @@ public class OllamaQuestionHandler implements QuestionHandler, InitializingBean 
         }
         logger.info("Handler: {}, Question: {}", getClass().getName(), Utils.serialize(question));
         Map<String, Object> toolContext = new HashMap<>();
-        toolContext.put("masterPassword", masterPassword);
         toolContext.put("question", question);
         OllamaOptions ollamaOptions = OllamaOptions.builder()
                 .model(MODEL_NAME)
@@ -73,7 +66,6 @@ public class OllamaQuestionHandler implements QuestionHandler, InitializingBean 
                 .build();
         Prompt prompt = new Prompt(question.getContent(), ollamaOptions);
         chatClient.prompt(prompt).stream().chatResponse().subscribe(new Consumer<>() {
-            final StreamTokenizer tokenizer = new ChatStreamTokenizer(10);
             final WebSocketSession out = question.getUser().getSession();
 
             @Override
