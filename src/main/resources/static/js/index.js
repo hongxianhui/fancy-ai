@@ -27,12 +27,34 @@ $(function () {
             messageElement.attr('id', receiveMessageId).appendTo($("#messages"));
         }
         data.content = data.content.replace(/\n\n/g, "<span class='token splitter'></span>");
+        if ("image" === data.type) {
+            const imageData = JSON.parse(data.content)[0];
+            data.content = "<img class='token image' alt='" + (imageData.actual_prompt ? imageData.actual_prompt : "") + "' src='" + imageData.url + "'>";
+            if (imageData.actual_prompt) {
+                data.content += "<span class='token splitter'></span>";
+                data.content += "<span class='token image-desc'>" + imageData.actual_prompt + "</span>";
+            }
+        }
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
         if (data.usage) {
-            $("<span>").addClass("token").addClass("splitter").appendTo(messageElement.children(".content"));
-            $("<span>").addClass("token").addClass("usage").text(data.usage.cost + "分").appendTo(messageElement.children(".content"));
+            $("<span>").addClass("token splitter").appendTo(messageElement.children(".content"));
+            $("<span>").addClass("token usage").text(data.usage.cost).appendTo(messageElement.children(".content"));
         }
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
+        switch (data.user.model) {
+            case "qwen2.5:0.5b":
+                document.title = "小欧 Fancy AI";
+                break;
+            case "qwen-plus":
+                document.title = "小千 Fancy AI";
+                break;
+            case "deepseek-r1":
+                document.title = "小迪 Fancy AI";
+                break;
+            case "wanx2.1-t2i-turbo":
+                document.title = "小威 Fancy AI";
+                break;
+        }
     };
 
     function formatTime(timestamp) {
@@ -64,17 +86,18 @@ $(function () {
     }
 
     function sendMessage(text) {
+        debugger;
+        $(audio).attr("src", "/tts/" + userId);
+        audio.play();
         const content = text || $('#message-input').val().trim();
         if (!content) return;
         // 添加用户消息
         $('#messages').append(createMessageElement(content, true));
         addWaitingMessage();
-        websocket.send(JSON.stringify({"content": $('#message-input').val()}));
+        websocket.send(JSON.stringify({"content": content}));
         $('#message-input').val('');
         receiveMessageId = `receive-${Date.now()}`;
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
-        $(audio).attr("src", "/tts/" + userId);
-        audio.play();
     }
 
     // 添加等待消息
@@ -93,7 +116,7 @@ $(function () {
     $.get("/prompts", function (result) {
         $.each(result, function (key, value) {
             $("<div>").addClass("preset-msg").text(value).appendTo($(".preset-menu")).click(function (e) {
-                $("#message-input").val("调用函数，" + value);
+                $("#message-input").val(value);
                 setTimeout(function () {
                     prompt = value.id;
                     $('.preset-menu').removeClass('show-menu');

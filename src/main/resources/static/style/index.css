@@ -170,14 +170,22 @@ body {
 }
 
 .message .tool {
-    font-size: 14px;
-    line-height: 14px;
-    font-style: italic;
+
 }
 
 .message .splitter {
     display: block;
     height: 6px;
+}
+
+.message .image {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.message .image-desc {
+    font-size: 12px;
+    line-height: 12px;
 }
 
 .loading-icon {
