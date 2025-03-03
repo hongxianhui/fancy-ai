@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client;
+package cn.fancyai.chat.client.tokenizer;
 
 public interface StreamTokenizer {
 

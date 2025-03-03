@@ -1,7 +1,5 @@
 package cn.fancyai.chat.client.tokenizer;
 
-import cn.fancyai.chat.client.StreamTokenizer;
-
 import java.util.Set;
 
 public class TTSSentenceTokenizer implements StreamTokenizer {

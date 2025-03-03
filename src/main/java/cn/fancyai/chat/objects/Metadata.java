@@ -6,6 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Getter
-public abstract class MetadataSupport {
+public abstract class Metadata {
     protected Map<String, Object> metadata = new HashMap<>();
 }

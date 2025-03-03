@@ -15,11 +15,11 @@ import java.util.Collection;
 
 @Setter
 @Getter
-public class SpeechWebSocketSessionDecorator extends WebSocketSessionDecorator {
+public class SpeechSessionDecorator extends WebSocketSessionDecorator {
     private final Collection<AnswerHandler> answerHandlers;
     private WebSocketSession speechSession;
 
-    public SpeechWebSocketSessionDecorator(WebSocketSession chatSession) {
+    public SpeechSessionDecorator(WebSocketSession chatSession) {
         super(chatSession);
         answerHandlers = ServerApplication.applicationContext.getBeansOfType(AnswerHandler.class).values();
     }

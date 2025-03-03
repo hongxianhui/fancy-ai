@@ -44,7 +44,7 @@ public class ChatEndpoint extends AbstractWebSocketHandler {
         }
         logger.info("Chat session established {}", userId);
         User user = userManager.userConnected(userId);
-        user.setChatSession(new SpeechWebSocketSessionDecorator(session));
+        user.setChatSession(new SpeechSessionDecorator(session));
         if (StringUtils.hasText(apiKey)) {
             user.setApiKey(apiKey);
         }

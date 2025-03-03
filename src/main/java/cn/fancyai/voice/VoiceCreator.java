@@ -6,14 +6,16 @@ import com.alibaba.dashscope.audio.ttsv2.enrollment.Voice;
 import com.alibaba.dashscope.audio.ttsv2.enrollment.VoiceEnrollmentService;
 import com.alibaba.dashscope.exception.InputRequiredException;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
 import static java.lang.System.exit;
 
 public class VoiceCreator {
-    public static String apiKey = "sk-d99cc195827a4ae395d70863c035313a";
+    public static String apiKey = "";
     private static String fileUrl = "http://47.104.251.206/record.wav";  // 请按实际情况进行替换
     private static String prefix = "fancy";
     private static String targetModel = "cosyvoice-v1";

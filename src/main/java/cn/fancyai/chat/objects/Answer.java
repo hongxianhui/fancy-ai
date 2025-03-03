@@ -3,12 +3,9 @@ package cn.fancyai.chat.objects;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Getter
 @Setter
-public class Answer extends MetadataSupport {
+public class Answer extends Metadata {
     public static final String TYPE_THINK = "think";
     public static final String TYPE_ANSWER = "answer";
     public static final String TYPE_TOOL = "tool";

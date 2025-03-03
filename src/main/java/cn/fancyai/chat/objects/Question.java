@@ -3,12 +3,9 @@ package cn.fancyai.chat.objects;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Setter
 @Getter
-public class Question extends MetadataSupport {
+public class Question extends Metadata {
     public static final String META_NO_THINK = "NO_THINK";
     public static final String META_IS_THINKING = "IS_THINKING";
 

@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client;
+package cn.fancyai.chat.client.tools;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
