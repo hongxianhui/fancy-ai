@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,19 +24,21 @@ public class UserManager {
 
     private final List<User> users = new ArrayList<>();
 
-    public User userConnected(WebSocketSession session) throws IOException {
-        User user = new User();
-        String userId = session.getId();
+    public User userConnected(String userId) {
+        User user = getUser(userId);
+        if (user != null) {
+            return user;
+        }
+        user = new User();
         user.setUserId(userId);
-        user.setModel(defaultModel);
+        user.getModel().setChat(defaultModel);
         users.add(user);
         return user;
     }
 
-    public User userGone(WebSocketSession session) throws IOException {
+    public User userGone(String userId) throws IOException {
         for (User user : users) {
-            String userId = user.getUserId();
-            if (userId.equals(session.getId())) {
+            if (userId.equals(user.getUserId())) {
                 users.remove(user);
                 return user;
             }

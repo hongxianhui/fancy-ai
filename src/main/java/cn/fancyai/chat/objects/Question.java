@@ -1,6 +1,5 @@
 package cn.fancyai.chat.objects;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,14 +8,12 @@ import java.util.Map;
 
 @Setter
 @Getter
-public class Question {
+public class Question extends MetadataSupport {
     public static final String META_NO_THINK = "NO_THINK";
     public static final String META_IS_THINKING = "IS_THINKING";
 
     private User user;
     private String content;
-    @JsonIgnore
-    private Map<String, Object> metadata = new HashMap<>();
 
     public static Builder builder() {
         return new Builder();
@@ -32,6 +29,11 @@ public class Question {
 
         public Builder content(String content) {
             question.content = content;
+            return this;
+        }
+
+        public Builder metadata(String key, Object value) {
+            question.metadata.put(key, value);
             return this;
         }
 

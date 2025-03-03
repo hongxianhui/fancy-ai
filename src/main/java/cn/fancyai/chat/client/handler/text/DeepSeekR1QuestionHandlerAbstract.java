@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client.handler.question;
+package cn.fancyai.chat.client.handler.text;
 
 import com.alibaba.dashscope.aigc.generation.GenerationOutput;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;
@@ -15,12 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Order(40)
+@Order(540)
 public class DeepSeekR1QuestionHandlerAbstract extends AbstractTextQuestionHandler {
     public static final String MODEL_NAME = "deepseek-r1";
 
     @Override
-    protected String getModelName() {
+    protected String getModelName(Question question) {
         return MODEL_NAME;
     }
 
@@ -47,7 +47,7 @@ public class DeepSeekR1QuestionHandlerAbstract extends AbstractTextQuestionHandl
         if (Boolean.TRUE.equals(metadata.get(Question.META_NO_THINK)) && content.isBlank() && finishReason == null) {
             return null;
         }
-        Answer.AnswerBuilder builder = Answer.builder().user(question.getUser()).type(Answer.TYPE_THINK).content(reasoning);
+        Answer.Builder builder = Answer.builder().user(question.getUser()).type(Answer.TYPE_THINK).content(reasoning);
         if (!content.isBlank()) {
             builder.type(Answer.TYPE_ANSWER);
             if (Boolean.TRUE.equals(metadata.get(Question.META_IS_THINKING))) {
@@ -59,7 +59,7 @@ public class DeepSeekR1QuestionHandlerAbstract extends AbstractTextQuestionHandl
             builder.content(content);
         }
         if (finishReason != null) {
-            builder.done(true);
+            builder.done();
         }
         return builder.build();
     }

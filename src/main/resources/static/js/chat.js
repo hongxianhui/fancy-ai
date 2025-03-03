@@ -1,23 +1,15 @@
 $(function () {
-    const audio = document.getElementById('audio');
     let lastTimestamp = 0;
     let waitingMessageId = 0;
     let receiveMessageId = 0;
     let prompt = "ASK";
     let userId = 0;
-    let websocket = new WebSocket("/ws?" + window.location.search);
 
-    websocket.onopen = function (evt) {
+    addChatOnOpenListener(function (evt) {
         $(createMessageElement('后端服务连接成功!', false)).appendTo($("#messages"));
         addWaitingMessage();
-    };
-    websocket.onclose = function (evt) {
-        $(createMessageElement('服务器连接已断开，刷新页面重新连接。', false)).appendTo($("#messages"));
-    };
-    websocket.onerror = function (evt) {
-        $(createMessageElement('服务器报错了，赶快喊大神起床查问题。', false)).appendTo($("#messages"));
-    };
-    websocket.onmessage = function (evt) {
+    });
+    addChatOnMessageListener(function (evt) {
         const data = JSON.parse(evt.data);
         userId = data.user.userId;
         $(`#${waitingMessageId}`).remove();
@@ -41,7 +33,7 @@ $(function () {
             $("<span>").addClass("token usage").text(data.usage.cost).appendTo(messageElement.children(".content"));
         }
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
-        switch (data.user.model) {
+        switch (data.user.model.chat) {
             case "qwen2.5:0.5b":
                 document.title = "小欧 Fancy AI";
                 break;
@@ -50,12 +42,8 @@ $(function () {
                 break;
             case "deepseek-r1":
                 document.title = "小迪 Fancy AI";
-                break;
-            case "wanx2.1-t2i-turbo":
-                document.title = "小威 Fancy AI";
-                break;
         }
-    };
+    });
 
     function formatTime(timestamp) {
         return new Date(timestamp).toLocaleTimeString('zh-CN', {
@@ -85,16 +73,12 @@ $(function () {
                 `;
     }
 
-    function sendMessage(text) {
-        debugger;
-        $(audio).attr("src", "/tts/" + userId);
-        audio.play();
+    function sendMessage(text, show) {
         const content = text || $('#message-input').val().trim();
         if (!content) return;
-        // 添加用户消息
-        $('#messages').append(createMessageElement(content, true));
+        if (show) $('#messages').append(createMessageElement(content, true));
         addWaitingMessage();
-        websocket.send(JSON.stringify({"content": content}));
+        wsChat.send(JSON.stringify({"content": content}));
         $('#message-input').val('');
         receiveMessageId = `receive-${Date.now()}`;
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
@@ -127,7 +111,7 @@ $(function () {
 
     $('#send-btn').click(function (e) {
         if (!$(e.target).closest('.dropdown-arrow').length) {
-            sendMessage();
+            sendMessage(null, true);
         }
     });
 
@@ -147,8 +131,42 @@ $(function () {
 
     $('#message-input').keypress(function (e) {
         if (e.which === 13) {
-            sendMessage();
+            sendMessage(null, true);
             return false;
         }
+    });
+
+    // 创建隐藏的文件输入框
+    const $fileInput = $('<input type="file" accept="image/*" style="display: none;">');
+
+    $.openFIleUpload = function openFIleUpload(modelName) {
+        $fileInput.attr("model", modelName).trigger('click');
+    }
+
+    // 文件选择事件
+    $fileInput.on('change', function (e) {
+        const file = e.target.files;
+        if (!file) return;
+
+        // 校验文件类型‌:ml-citation{ref="2,5" data="citationList"}
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file[0].type)) {
+            $(createMessageElement('仅支持JPG/PNG/GIF格式的图片', false)).appendTo($("#messages"));
+            return;
+        }
+
+        if (file[0].size > 512 * 1024) {
+            $(createMessageElement('文件大小不能超过512K。', false)).appendTo($("#messages"));
+            return;
+        }
+
+        // 读取文件内容‌:ml-citation{ref="1,4" data="citationList"}
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const base64 = e.target.result;
+            $('#messages').append(createMessageElement("<img alt='' class='image' src='" + base64 + "'><span class='token splitter'></span>帮我理解一下这张图片的内容", true));
+            sendMessage("理解图片内容（" + $fileInput.attr("model") + "）：" + base64, false)
+        };
+        reader.readAsDataURL(file[0]);
     });
 });

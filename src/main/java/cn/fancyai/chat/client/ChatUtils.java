@@ -1,15 +1,19 @@
 package cn.fancyai.chat.client;
 
+import cn.fancyai.chat.ServerApplication;
+import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.User;
 import com.alibaba.dashscope.exception.NoApiKeyException;
-import cn.fancyai.chat.ServerApplication;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.ResourceUtils;
+import org.springframework.web.socket.TextMessage;
 
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -32,6 +36,12 @@ public class ChatUtils {
     public static <T> T deserialize(String json, Class<T> clazz) throws JsonProcessingException {
         return mapper.readValue(json, clazz);
     }
+
+    public static String getText(String resource) {
+        String text = ResourceUtils.getText("classpath:/constant/" + resource);
+        return text.replaceAll("\r\n", "");
+    }
+
     public static Map<String, String> parseQueryParams(String url) throws Exception {
         Map<String, String> params = new LinkedHashMap<>();
         String[] urlParts = url.split("\\?", 2);

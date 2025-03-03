@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client.handler.question;
+package cn.fancyai.chat.client.handler.text;
 
 import com.alibaba.dashscope.aigc.generation.GenerationOutput;
 import com.alibaba.dashscope.aigc.generation.GenerationParam;
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Order(30)
+@Order(530)
 public class QWenPlusQuestionHandlerAbstract extends AbstractTextQuestionHandler {
     public static final String MODEL_NAME = "qwen-plus";
 
     @Override
-    protected String getModelName() {
+    protected String getModelName(Question question) {
         return MODEL_NAME;
     }
 
@@ -37,11 +37,11 @@ public class QWenPlusQuestionHandlerAbstract extends AbstractTextQuestionHandler
 
     @Override
     protected Answer getAnswerOnStream(GenerationResult token, Question question) {
-        GenerationOutput.Choice choice = token.getOutput().getChoices().get(0);
+        GenerationOutput.Choice choice = token.getOutput().getChoices().getFirst();
         String content = choice.getMessage().getContent();
-        Answer.AnswerBuilder builder = Answer.builder().user(question.getUser()).type(Answer.TYPE_ANSWER).content(content);
+        Answer.Builder builder = Answer.builder().user(question.getUser()).type(Answer.TYPE_ANSWER).content(content);
         if (!choice.getFinishReason().isEmpty() && !"null".equals(choice.getFinishReason())) {
-            builder.done(true);
+            builder.done();
         }
         return builder.build();
     }

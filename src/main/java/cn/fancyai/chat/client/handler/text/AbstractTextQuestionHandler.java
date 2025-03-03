@@ -1,8 +1,8 @@
-package cn.fancyai.chat.client.handler.question;
+package cn.fancyai.chat.client.handler.text;
 
 import cn.fancyai.chat.client.ChatUtils;
+import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
-import cn.fancyai.chat.client.handler.answer.AnswerCallback;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
 import cn.fancyai.chat.objects.Usage;
@@ -24,9 +24,7 @@ import java.util.List;
 public abstract class AbstractTextQuestionHandler implements QuestionHandler {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Generation generation = new Generation();
-
-    protected abstract String getModelName();
+    protected abstract String getModelName(Question question);
 
     protected abstract Answer getAnswerOnStream(GenerationResult token, Question question);
 
@@ -51,7 +49,7 @@ public abstract class AbstractTextQuestionHandler implements QuestionHandler {
         messages.addAll(userMessages);
         GenerationParam.GenerationParamBuilder<?, ?> builder = GenerationParam.builder()
                 .apiKey(ChatUtils.getApiKey(question.getUser()))
-                .model(getModelName())
+                .model(getModelName(question))
                 .messages(messages)
                 .resultFormat(GenerationParam.ResultFormat.MESSAGE)
                 .incrementalOutput(true);
@@ -60,18 +58,16 @@ public abstract class AbstractTextQuestionHandler implements QuestionHandler {
     }
 
     @Override
-    public boolean handle(Question question, AnswerCallback callback) throws Exception {
+    public boolean handle(Question question, HandlerContext context) throws Exception {
         User user = question.getUser();
-        if (!user.getModel().equals(getModelName())) {
+        if (!user.getModel().getChat().equals(getModelName(question))) {
             return false;
         }
-        logger.info("Handler: {}, Question: {}", getClass().getName(), ChatUtils.serialize(question));
+        logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
         question.getMetadata().put(Question.META_IS_THINKING, true);
+        Generation generation = new Generation();
         generation.streamCall(getGenerationParam(question)).blockingForEach(token -> {
             try {
-                if (!callback.isOpen()) {
-                    return;
-                }
                 Answer answer = getAnswerOnStream(token, question);
                 if (answer == null) {
                     return;
@@ -85,7 +81,7 @@ public abstract class AbstractTextQuestionHandler implements QuestionHandler {
                     answer.setUsage(chatUsage);
                     logger.info("Answer complete, cost: {}", ChatUtils.serialize(chatUsage));
                 }
-                callback.onAnswer(answer);
+                user.getChatSession().sendMessage(answer, context);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }

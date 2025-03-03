@@ -1,5 +1,8 @@
 package cn.fancyai.chat.client.tools;
 
+import cn.fancyai.chat.client.ChatUtils;
+import cn.fancyai.chat.objects.Answer;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.execution.ToolCallResultConverter;
@@ -23,7 +26,7 @@ public interface ChatTool {
                             .name(method.getName())
                             .description(description.value())
                             .build())
-                    .toolCallResultConverter(new DirectCallResultConverter())
+                    .toolCallResultConverter(new ChatAnswerCallResultConverter())
                     .toolMetadata(ToolMetadata.builder().returnDirect(true).build())
                     .toolMethod(method)
                     .build());
@@ -31,11 +34,17 @@ public interface ChatTool {
         return toolCallbacks;
     }
 
-    class DirectCallResultConverter implements ToolCallResultConverter {
+    class ChatAnswerCallResultConverter implements ToolCallResultConverter {
 
         @Override
         public String convert(Object result, Type returnType) {
-            return (String) result;
+            Answer answer = (Answer) result;
+            try {
+                return ChatUtils.serialize(answer);
+            } catch (JsonProcessingException e) {
+
+            }
+            return "";
         }
     }
 }

@@ -1,22 +1,21 @@
 package cn.fancyai.chat.objects;
 
+import cn.fancyai.chat.endpoint.SpeechWebSocketSessionDecorator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Setter
 @Getter
-public class User {
-    public static final String META_VOICE = "VOICE";
-
+@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
+public class User extends MetadataSupport {
+    @EqualsAndHashCode.Include
     private String userId;
-    private String model;
+    private Model model = new Model();
     @JsonIgnore
     private String apiKey;
     @JsonIgnore
-    private Map<String, Object> metadata = new HashMap<>();
+    private SpeechWebSocketSessionDecorator chatSession;
 }

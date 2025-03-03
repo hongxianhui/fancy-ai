@@ -178,7 +178,12 @@ body {
     height: 6px;
 }
 
-.message .image {
+.sent .image {
+    width: 33vw;
+    border-radius: 8px;
+}
+
+.received .image {
     width: 100%;
     border-radius: 8px;
 }
