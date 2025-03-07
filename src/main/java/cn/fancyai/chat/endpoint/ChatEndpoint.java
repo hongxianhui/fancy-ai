@@ -2,9 +2,9 @@ package cn.fancyai.chat.endpoint;
 
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.UserManager;
-import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
 import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
+import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
 import cn.fancyai.chat.objects.User;
@@ -12,7 +12,6 @@ import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.ResourceUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -48,7 +47,7 @@ public class ChatEndpoint extends AbstractWebSocketHandler {
         if (StringUtils.hasText(apiKey)) {
             user.setApiKey(apiKey);
         }
-        Answer answer = Answer.builder(user).content(ResourceUtils.getText("classpath:constant/" + user.getModel().getChat().replaceAll(":", "_") + ".html")).done().build();
+        Answer answer = Answer.builder(user).content(ChatUtils.getConstant("qwen2.5-1.5b-instruct.html")).done().build();
         session.sendMessage(new TextMessage(ChatUtils.serialize(answer)));
     }
 
