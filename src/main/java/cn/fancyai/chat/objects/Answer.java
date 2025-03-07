@@ -10,6 +10,7 @@ public class Answer extends Metadata {
     public static final String TYPE_ANSWER = "answer";
     public static final String TYPE_TOOL = "tool";
     public static final String TYPE_IMAGE = "image";
+    public static final String TYPE_VIDEO = "video";
 
     private String type = TYPE_ANSWER;
     private User user;

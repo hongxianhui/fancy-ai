@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client.rag;
+package cn.fancyai.chat.client.worker;
 
 import cn.fancyai.chat.ServerApplication;
 import com.aliyun.auth.credentials.Credential;
@@ -7,13 +7,13 @@ import com.aliyun.sdk.service.bailian20231229.AsyncClient;
 import darabonba.core.client.ClientOverrideConfiguration;
 import org.springframework.core.env.Environment;
 
-public abstract class KnowledgeSequence<T> {
+public abstract class KnowledgeWorker<T> extends UploadFileWorker<T> {
     public static final String CATEGORY_ID = "cate_54146e8aa37a41ad90d215e5b7d67a36_11209711";
     public static final String WORKSPACE_ID = "llm-z6xbh2xfa9n1er6q";
 
     protected final AsyncClient asyncClient;
 
-    public KnowledgeSequence() {
+    public KnowledgeWorker() {
         Environment environment = ServerApplication.applicationContext.getEnvironment();
         String accessKeyId = environment.getProperty("ai.ailibaba-accessKeyId");
         String accessKeySecret = environment.getProperty("ai.ailibaba-accessKeySecret");

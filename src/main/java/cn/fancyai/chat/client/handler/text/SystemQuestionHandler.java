@@ -33,6 +33,12 @@ public class SystemQuestionHandler implements QuestionHandler {
             user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("knowledge.html")), context);
             return true;
         }
+        if (content.startsWith("视频相关功能")) {
+            logger.info("Question handler {}", getClass().getSimpleName());
+            context.mute();
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("video.html")), context);
+            return true;
+        }
         if (content.startsWith("图片相关功能")) {
             logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();

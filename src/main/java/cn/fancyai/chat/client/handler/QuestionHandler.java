@@ -5,6 +5,10 @@ import cn.fancyai.chat.objects.Question;
 /**
  * 100:SystemQuestionHandler
  * <p>
+ * 310:Text2VideoQuestionHandler
+ * 320:VideoResultQuestionHandler
+ * 330:Image2VideoQuestionHandler
+ * <p>
  * 410:PosterQuestionHandler
  * 420:GeneraImageQuestionHandler
  * 430:ImageVLQuestionHandler

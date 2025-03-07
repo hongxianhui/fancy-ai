@@ -49,7 +49,7 @@ public class GeneraImageQuestionHandler extends AbstractImageQuestionHandler {
         }
         if (getModelName(question) == null) {
             return Answer.builder(question.getUser())
-                    .content(ChatUtils.getConstant("image-vl.html"))
+                    .content("模型名称不正确，请按提示词模板发送消息，不要删掉提示词前缀和模型名称。")
                     .done()
                     .build();
         }

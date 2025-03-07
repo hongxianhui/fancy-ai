@@ -1,10 +1,9 @@
-package cn.fancyai.chat.client.rag;
+package cn.fancyai.chat.client.worker;
 
 import com.aliyun.sdk.service.bailian20231229.models.*;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -13,30 +12,22 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class UploadSequence extends KnowledgeSequence<UploadSequence> {
-    private final File file;
-    private final String name;
+public class AddKnowledgeWorker extends KnowledgeWorker<AddKnowledgeWorker> {
     private String fileUploadLeaseId = null;
     private String xbailianExtra = null;
     private String contentType = null;
     private String method = null;
     private String url = null;
 
-    public UploadSequence(File file, String name) {
-        super();
-        this.file = file;
-        this.name = name;
-    }
-
-    public UploadSequence applyFileUploadLease() throws ExecutionException, InterruptedException, IOException {
-        FileInputStream fileInputStream = new FileInputStream(this.file);
+    public AddKnowledgeWorker applyFileUploadLease() throws ExecutionException, InterruptedException, IOException {
+        FileInputStream fileInputStream = new FileInputStream(super.tempFile);
         String fileMD5 = DigestUtils.md5Hex(fileInputStream);
         ApplyFileUploadLeaseRequest applyFileUploadLeaseRequest = ApplyFileUploadLeaseRequest.builder()
-                .fileName(name)
+                .fileName(super.fileName)
                 .md5(fileMD5)
                 .categoryId(CATEGORY_ID)
                 .workspaceId(WORKSPACE_ID)
-                .sizeInBytes(String.valueOf(this.file.length()))
+                .sizeInBytes(String.valueOf(super.fileLength))
                 .build();
         CompletableFuture<ApplyFileUploadLeaseResponse> response = asyncClient.applyFileUploadLease(applyFileUploadLeaseRequest);
         ApplyFileUploadLeaseResponse applyFileUploadLeaseResponse = response.get();
@@ -50,14 +41,14 @@ public class UploadSequence extends KnowledgeSequence<UploadSequence> {
         return this;
     }
 
-    public UploadSequence uploadFile() throws IOException {
+    public AddKnowledgeWorker uploadKnowledge() throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setRequestMethod(method);
         connection.setDoOutput(true);
         connection.setRequestProperty("X-bailian-extra", xbailianExtra);
         connection.setRequestProperty("Content-Type", contentType);
-        try (DataOutputStream outStream = new DataOutputStream(connection.getOutputStream()); FileInputStream fileInputStream = new FileInputStream(file)) {
-            byte[] buffer = new byte[4096];
+        try (DataOutputStream outStream = new DataOutputStream(connection.getOutputStream()); FileInputStream fileInputStream = new FileInputStream(super.tempFile)) {
+            byte[] buffer = new byte[5120];
             int bytesRead;
             while ((bytesRead = fileInputStream.read(buffer)) != -1) {
                 outStream.write(buffer, 0, bytesRead);
@@ -70,7 +61,7 @@ public class UploadSequence extends KnowledgeSequence<UploadSequence> {
         throw new IOException("Upload file to cloud failed.");
     }
 
-    public UploadSequence addFile() throws ExecutionException, InterruptedException {
+    public AddKnowledgeWorker addKnowledge() throws ExecutionException, InterruptedException {
         AddFileRequest addFileRequest = AddFileRequest.builder()
                 .leaseId(fileUploadLeaseId)
                 .parser("DASHSCOPE_DOCMIND")

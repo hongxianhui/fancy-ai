@@ -3,7 +3,6 @@ $(function () {
     let waitingMessageId = 0;
     let receiveMessageId = 0;
     let prompt = "ASK";
-    let returnSendMessage = true;
     let userId = 0;
 
     $.createMessageElement = function createMessageElement(content, isSent) {
@@ -23,36 +22,67 @@ $(function () {
         addWaitingMessage();
     });
 
-    addOnFileUploadListener(function (formData) {
-        let file = formData.getAll("file");
-        if (!file.length) {
-            return;
-        }
-        $($.createMessageElement('我要上传新的知识库文档', true)).appendTo($("#messages"));
+    addOnFileUploadListener(function (formData, model) {
         addWaitingMessage();
         $('#message-input').val('');
         receiveMessageId = `receive-${Date.now()}`;
+        if (model === "wanx2.1-i2v-turbo" || model === "wanx2.1-i2v-plus") {
+            $($.createMessageElement('我要上传图片', true)).appendTo($("#messages"));
+            $.ajax({
+                url: '/prepareImage2video?model=' + model + '&userId=' + userId, // 替换为实际的上传接口地址
+                type: 'POST',
+                data: formData,
+                processData: false, // 不处理数据
+                contentType: false, // 不设置内容类型，让浏览器自动设置
+                success: function (response) {
+                    $(`#${waitingMessageId}`).remove();
+                    $('#message-input').val(response);
+                },
+                error: function (xhr, status, error) {
+                    $(`#${waitingMessageId}`).remove();
+                    $.createMessageElement("上传图片失败了，请稍后重试。", false);
+                }
+            });
+        } else if (model === "qwen-vl-max" || model === "qwen-vl-plus") {
+            $.ajax({
+                url: '/analyzeImage?model=' + model + '&userId=' + userId, // 替换为实际的上传接口地址
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false, // 不设置内容类型，让浏览器自动设置
+                success: function (response) {
+                    $(`#${waitingMessageId}`).remove();
+                    $($.createMessageElement(response, true)).appendTo($("#messages"));
+                    let fileName = formData.getAll("file")[0].name;
+                    sendMessage("理解图片内容（" + model + "）：" + fileName);
+                },
+                error: function (xhr, status, error) {
+                    $(`#${waitingMessageId}`).remove();
+                    $.createMessageElement("上传图片失败了，请稍后重试。", false);
+                }
+            });
+        } else {
+            $($.createMessageElement('我要上传新的知识库文档', true)).appendTo($("#messages"));
+            $.ajax({
+                url: '/knowledge?model=' + model + '&userId=' + userId, // 替换为实际的上传接口地址
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                error: function (xhr, status, error) {
+                    $(`#${waitingMessageId}`).remove();
+                    $.createMessageElement("上传文件失败了，请稍后重试。", false);
+                }
+            });
+        }
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
-        $.ajax({
-            url: '/knowledge?userId=' + userId, // 替换为实际的上传接口地址
-            type: 'POST',
-            data: formData,
-            processData: false, // 不处理数据
-            contentType: false, // 不设置内容类型，让浏览器自动设置
-            success: function (response) {
-                // 处理成功响应
-                console.log(response);
-            },
-            error: function (xhr, status, error) {
-                // 处理错误响应
-                console.log(error);
-            }
-        });
     })
 
     addOnFileContentListener(function (base64, model) {
-        $('#messages').append($.createMessageElement("<img alt='' class='image' src='" + base64 + "'><span class='token splitter'></span>帮我理解一下这张图片的内容", true));
-        sendMessage("理解图片内容（" + model + "）：" + base64, false)
+        if (model === "qwen-vl-max" || model === "qwen-vl-plus") {
+            $('#messages').append($.createMessageElement("<img alt='' class='image' src='" + base64 + "'><span class='token splitter'></span>帮我理解一下这张图片的内容", true));
+            sendMessage("理解图片内容（" + model + "）：" + base64, false)
+        }
     });
 
     addChatOnMessageListener(function (evt) {
@@ -71,6 +101,14 @@ $(function () {
             if (imageData.actual_prompt) {
                 data.content += "<span class='token splitter'></span>";
                 data.content += "<span class='token image-desc'>" + imageData.actual_prompt + "</span>";
+            }
+        }
+        if ("video" === data.type) {
+            const videoData = JSON.parse(data.content);
+            data.content = "<video class='token video' controls><source src='" + videoData.videoUrl + "'></video>";
+            if (videoData.actual_prompt) {
+                data.content += "<span class='token splitter'></span>";
+                data.content += "<span class='token media-desc'>" + imageData.actual_prompt + "</span>";
             }
         }
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
@@ -121,7 +159,7 @@ $(function () {
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
     }
 
-    // 添加等待消息
+// 添加等待消息
     function addWaitingMessage() {
         waitingMessageId = `waiting-${Date.now()}`;
         $('#messages').append(`
@@ -153,7 +191,7 @@ $(function () {
         });
     }
 
-    //渲染提示词列表
+//渲染提示词列表
     $.get("/prompts", function (result) {
         $.each(result, function (key, value) {
             $("<div>").addClass("preset-msg").text(value).appendTo($(".preset-menu")).click(function (e) {
@@ -197,4 +235,5 @@ $(function () {
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
         return /android|iphone|ipad|tablet|mobile/i.test(userAgent);
     }
-});
+})
+;

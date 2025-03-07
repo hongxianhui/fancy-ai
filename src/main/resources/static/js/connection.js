@@ -34,6 +34,10 @@ wsChat.onopen = function handleMessage(event) {
     chatOnOpenListeners.forEach(handler => handler(event));
 }
 
+wsChat.onclose = function handleMessage(event) {
+    $($.createMessageElement('后端服务已断开，请刷新页面重新连接!', false)).appendTo($("#messages"));
+}
+
 wsChat.onmessage = function handleMessage(event) {
     if (!wsSpeech) {
         wsSpeech = new WebSocket("/speech?id=" + userId + "&apiKey=" + (apiKey === null ? "" : apiKey));

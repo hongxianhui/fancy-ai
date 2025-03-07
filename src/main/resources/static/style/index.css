@@ -189,7 +189,12 @@ body {
     border-radius: 8px;
 }
 
-.message .image-desc {
+.received .video {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.message .media-desc {
     font-size: 12px;
     line-height: 12px;
 }

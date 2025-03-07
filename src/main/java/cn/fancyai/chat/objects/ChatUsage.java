@@ -17,6 +17,7 @@ public class ChatUsage {
     private long speechTokens;
     private long imageAmount;
     private long imageTokens;
+    private long videoDuration;
     private String cost;
     @JsonIgnore
     private User user;
@@ -60,6 +61,12 @@ public class ChatUsage {
                     break;
                 case "qwen-vl-plus":
                     fee += 0.0015f * 100 / 1000 * promptTokens + 0.00075f * 100 / 1000 * (completionTokens + imageTokens);
+                    break;
+                case "wanx2.1-t2v-turbo":
+                    fee += 24f * videoDuration;
+                    break;
+                case "wanx2.1-t2v-plus":
+                    fee += 70f * videoDuration;
                     break;
             }
         }
