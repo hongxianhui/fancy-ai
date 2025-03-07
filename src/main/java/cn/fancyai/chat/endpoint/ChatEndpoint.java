@@ -2,12 +2,12 @@ package cn.fancyai.chat.endpoint;
 
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.UserManager;
+import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
 import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
 import cn.fancyai.chat.objects.User;
-import com.alibaba.dashscope.exception.NoApiKeyException;
 import jakarta.annotation.Resource;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
@@ -44,15 +44,11 @@ public class ChatEndpoint extends AbstractWebSocketHandler {
         }
         logger.info("Chat session established {}", userId);
         User user = userManager.userConnected(userId);
-        user.setChatSession(new SpeechSessionDecorator(session));
+        user.setChatSession(new OutgoingSessionDecorator(session));
         if (StringUtils.hasText(apiKey)) {
             user.setApiKey(apiKey);
         }
-        Answer answer = Answer.builder()
-                .user(user)
-                .content(ResourceUtils.getText("classpath:constant/" + user.getModel().getChat().replaceAll(":", "_") + ".html"))
-                .done()
-                .build();
+        Answer answer = Answer.builder(user).content(ResourceUtils.getText("classpath:constant/" + user.getModel().getChat().replaceAll(":", "_") + ".html")).done().build();
         session.sendMessage(new TextMessage(ChatUtils.serialize(answer)));
     }
 
@@ -75,32 +71,15 @@ public class ChatEndpoint extends AbstractWebSocketHandler {
             HandlerContext context = new HandlerContext();
             Question question = ChatUtils.deserialize(message.getPayload(), Question.class);
             question.setUser(user);
-            logger.info("Question: {}", ChatUtils.serialize(question));
+            String log = ChatUtils.serialize(question);
+            logger.info("Question: {}", log.substring(0, Math.min(log.length(), 500)));
             for (QuestionHandler handler : questionHandlers) {
                 if (handler.handle(question, context)) {
                     break;
                 }
             }
-        } catch (NoApiKeyException e) {
-            logger.error(e.getMessage());
-            Answer answer = Answer.builder()
-                    .user(user)
-                    .type(Answer.TYPE_TOOL)
-                    .content("""
-                            未提供API-KEY，无法使用付费模型。
-                            
-                            
-                            请按如下格式在URL上提供阿里云百练大模型的API-KEY：
-                            
-                            
-                            <span style='color:blue'>http://fancy-ai.cn?apiKey=xxx。</span>
-                            
-                            
-                            做为开源项目，我们保证不会以任何形式截获和使用您的API-KEY。"""
-                    )
-                    .done()
-                    .build();
-            session.sendMessage(new TextMessage(ChatUtils.serialize(answer)));
+        } catch (Exception e) {
+            new ChatExceptionConsumer(user).accept(e);
         }
     }
 

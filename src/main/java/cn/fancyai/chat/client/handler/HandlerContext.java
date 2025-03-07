@@ -10,6 +10,7 @@ public class HandlerContext extends HashMap<String, Object> {
     public static final String SPEECH_TOKENS = "speechTokens";
     public static final String SPEECH_TOKENIZER = "speechTokenizer";
     public static final String SPEECH_SESSION = "speechSession";
+    public static final String IS_THINKING = "isThinking";
 
     @Override
     public Object put(String key, Object value) {

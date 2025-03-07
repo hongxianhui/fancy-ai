@@ -6,8 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Model {
-    private String chat = "qwen2.5:0.5b";
+    private String chat;
     private String speech;
-    private String image;
-    private String video;
+    private String tool;
 }

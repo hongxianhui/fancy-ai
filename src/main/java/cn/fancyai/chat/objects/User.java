@@ -1,6 +1,6 @@
 package cn.fancyai.chat.objects;
 
-import cn.fancyai.chat.endpoint.SpeechSessionDecorator;
+import cn.fancyai.chat.endpoint.OutgoingSessionDecorator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -16,5 +16,5 @@ public class User extends Metadata {
     @JsonIgnore
     private String apiKey;
     @JsonIgnore
-    private SpeechSessionDecorator chatSession;
+    private OutgoingSessionDecorator chatSession;
 }

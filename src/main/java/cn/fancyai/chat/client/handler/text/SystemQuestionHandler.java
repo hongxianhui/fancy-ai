@@ -1,10 +1,9 @@
-package cn.fancyai.chat.client.handler;
+package cn.fancyai.chat.client.handler.text;
 
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.UserManager;
-import cn.fancyai.chat.client.handler.text.DeepSeekR1QuestionHandlerAbstract;
-import cn.fancyai.chat.client.handler.text.OllamaQuestionHandler;
-import cn.fancyai.chat.client.handler.text.QWenPlusQuestionHandlerAbstract;
+import cn.fancyai.chat.client.handler.HandlerContext;
+import cn.fancyai.chat.client.handler.QuestionHandler;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
 import cn.fancyai.chat.objects.User;
@@ -28,51 +27,51 @@ public class SystemQuestionHandler implements QuestionHandler {
     public boolean handle(Question question, HandlerContext context) throws Exception {
         String content = question.getContent();
         User user = question.getUser();
-        if (content.equals("理解图片内容")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+        if (content.startsWith("管理知识库")) {
+            logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
-            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getText("image-vl.html")), context);
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("knowledge.html")), context);
             return true;
         }
-        if (content.startsWith("一键生成图片")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+        if (content.startsWith("图片相关功能")) {
+            logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
-            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getText("images.html")), context);
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("images.html")), context);
             return true;
         }
         if (content.startsWith("选择聊天角色")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
-            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getText("roles.html")), context);
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("roles.html")), context);
             return true;
         }
         if (content.startsWith("选择朗读音色")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
-            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getText("tones.html")), context);
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("tones.html")), context);
             return true;
         }
         if (content.startsWith("关闭语音朗读")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             question.getUser().getModel().setSpeech(null);
             user.getChatSession().sendMessage(getAnswer(user, "语音朗读功能已关闭。"), context);
             return true;
         }
         if (content.startsWith("切换音色")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             switchTone(content, user);
             user.getChatSession().sendMessage(getAnswer(user, "音色已切换。"), context);
             return true;
         }
         if (content.startsWith("切换角色")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             switchRole(content, user);
             context.mute();
-            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getText(user.getModel().getChat().replaceAll(":", "_") + ".html")), context);
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant(user.getModel().getChat().replaceAll(":", "_") + ".html")), context);
             return true;
         }
         if (content.startsWith("查询系统在线用户")) {
-            logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+            logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
             List<User> users = userManager.getUsers();
             StringBuilder answer = new StringBuilder();
@@ -87,8 +86,7 @@ public class SystemQuestionHandler implements QuestionHandler {
     }
 
     private Answer getAnswer(User user, String content) {
-        return Answer.builder()
-                .user(user)
+        return Answer.builder(user)
                 .type(Answer.TYPE_TOOL)
                 .content(content)
                 .done()
@@ -97,13 +95,16 @@ public class SystemQuestionHandler implements QuestionHandler {
 
     private static void switchRole(String content, User user) {
         if (content.endsWith("小欧")) {
-            user.getModel().setChat(OllamaQuestionHandler.MODEL_NAME);
+            user.getModel().setChat("qwen2.5-1.5b-instruct");
         }
         if (content.endsWith("小千")) {
-            user.getModel().setChat(QWenPlusQuestionHandlerAbstract.MODEL_NAME);
+            user.getModel().setChat("qwen-plus");
         }
         if (content.endsWith("小迪")) {
-            user.getModel().setChat(DeepSeekR1QuestionHandlerAbstract.MODEL_NAME);
+            user.getModel().setChat("deepseek-r1");
+        }
+        if (content.endsWith("小程")) {
+            user.getModel().setChat("qwen-coder-plus");
         }
     }
 

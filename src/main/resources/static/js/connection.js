@@ -2,11 +2,11 @@ const userId = generateUUID();
 const params = new URLSearchParams(window.location.search);
 const apiKey = params.get("apiKey");
 let wsSpeech;
-const wsChat = new WebSocket("/chat?id=" + userId + "&apiKey=" + apiKey);
 const chatOnOpenListeners = [];
 const speechOnOpenListeners = [];
 const chatOnMessageListeners = [];
 const speechOnMessageListeners = [];
+const wsChat = new WebSocket("/chat?id=" + userId + "&apiKey=" + (apiKey === null ? "" : apiKey));
 
 function generateUUID() {
     const array = new Uint8Array(16);
@@ -31,16 +31,18 @@ function addSpeechOnOpenListener(handler) {
 }
 
 wsChat.onopen = function handleMessage(event) {
-    wsSpeech = new WebSocket("/speech?id=" + userId + "&apiKey=" + apiKey);
-    wsSpeech.onopen = function handleMessage(event) {
-        speechOnOpenListeners.forEach(handler => handler(event));
-    }
-    wsSpeech.onmessage = function handleMessage(event) {
-        speechOnMessageListeners.forEach(handler => handler(event));
-    }
     chatOnOpenListeners.forEach(handler => handler(event));
 }
 
 wsChat.onmessage = function handleMessage(event) {
+    if (!wsSpeech) {
+        wsSpeech = new WebSocket("/speech?id=" + userId + "&apiKey=" + (apiKey === null ? "" : apiKey));
+        wsSpeech.onopen = function handleMessage(event) {
+            speechOnOpenListeners.forEach(handler => handler(event));
+        }
+        wsSpeech.onmessage = function handleMessage(event) {
+            speechOnMessageListeners.forEach(handler => handler(event));
+        }
+    }
     chatOnMessageListeners.forEach(handler => handler(event));
 }

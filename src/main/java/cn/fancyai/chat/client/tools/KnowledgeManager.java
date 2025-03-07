@@ -11,13 +11,13 @@ import java.util.List;
 @Component("knowledgeManager")
 public class KnowledgeManager {
 
-    private final VectorStore vectorStore;
-
-    public KnowledgeManager(EmbeddingModel dashscopeEmbeddingModel) {
-        vectorStore = SimpleVectorStore.builder(dashscopeEmbeddingModel).build();
-    }
-
-    public void addKnowledge(String knowledge) {
-        vectorStore.add(List.of(new Document(knowledge)));
-    }
+//    private final VectorStore vectorStore;
+//
+//    public KnowledgeManager(EmbeddingModel dashscopeEmbeddingModel) {
+//        vectorStore = SimpleVectorStore.builder(dashscopeEmbeddingModel).build();
+//    }
+//
+//    public void addKnowledge(String knowledge) {
+//        vectorStore.add(List.of(new Document(knowledge)));
+//    }
 }

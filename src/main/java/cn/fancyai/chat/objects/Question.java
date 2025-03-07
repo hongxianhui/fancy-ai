@@ -6,9 +6,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public class Question extends Metadata {
-    public static final String META_NO_THINK = "NO_THINK";
-    public static final String META_IS_THINKING = "IS_THINKING";
-
     private User user;
     private String content;
 

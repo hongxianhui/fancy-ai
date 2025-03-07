@@ -1,25 +1,31 @@
 package cn.fancyai.chat.client.handler.text;
 
 import cn.fancyai.chat.client.ChatUtils;
-import cn.fancyai.chat.client.UserManager;
 import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
-import cn.fancyai.chat.client.tools.AdministrationTool;
 import cn.fancyai.chat.client.tools.ChatTool;
-import cn.fancyai.chat.client.tools.KnowledgeTool;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
 import cn.fancyai.chat.objects.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.ResourceUtils;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.ollama.OllamaEmbeddingModel;
 import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.ai.ollama.api.OllamaOptions;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.SimpleVectorStore;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -31,53 +37,69 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Order(520)
-public class OllamaQuestionHandler implements QuestionHandler, InitializingBean {
-    public static final String MODEL_NAME = "qwen2.5:0.5b";
+@Order(510)
+public class OllamaQuestionHandler implements QuestionHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final UserManager userManager;
 
-    private ChatClient chatClient;
+    private final ChatClient chatClient;
 
-    public OllamaQuestionHandler(UserManager userManager) {
-        this.userManager = userManager;
+    public OllamaQuestionHandler(ChatMemory chatMemory) {
+        //Embedding
+        EmbeddingModel embeddingModel = OllamaEmbeddingModel.builder()
+                .ollamaApi(new OllamaApi())
+                .defaultOptions(OllamaOptions.builder().model("nomic-embed-text").build())
+                .build();
+        VectorStore vectorStore = SimpleVectorStore.builder(embeddingModel).build();
+        //Tool
+        List<FunctionCallback> functionCallbacks = ChatTool.generateFunctionCallbacks();
+        //Options
+        OllamaOptions defaultOptions = OllamaOptions.builder()
+                .functionCallbacks(functionCallbacks)
+                .build();
+        //Model
+        OllamaChatModel chatModel = OllamaChatModel.builder().ollamaApi(new OllamaApi()).defaultOptions(defaultOptions).build();
+        //Client
+        chatClient = ChatClient.builder(chatModel)
+                .defaultSystem(ChatUtils.getPrompt("qwen2.5-1.5b-instruct-system.txt"))
+                .defaultFunctions(functionCallbacks.toArray(new FunctionCallback[0]))
+                .defaultAdvisors(
+                        PromptChatMemoryAdvisor.builder(chatMemory).chatMemoryRetrieveSize(10).build()
+                        , new QuestionAnswerAdvisor(vectorStore, SearchRequest.builder().build(), ChatUtils.getPrompt("rag.txt"))
+                )
+                .build();
     }
 
-    @Override
-    public void afterPropertiesSet() {
-        List<ToolCallback> toolCallbacks = new ArrayList<>();
-        toolCallbacks.addAll(ChatTool.generateToolCallbacks(AdministrationTool.class));
-        toolCallbacks.addAll(ChatTool.generateToolCallbacks(KnowledgeTool.class));
-        OllamaOptions chatOptions = OllamaOptions.builder().build();
-        OllamaChatModel chatModel = OllamaChatModel.builder().ollamaApi(new OllamaApi()).defaultOptions(chatOptions).build();
-        chatClient = ChatClient.builder(chatModel)
-                .defaultSystem(ResourceUtils.getText("classpath:prompt/local-identity.txt"))
-                .defaultTools(toolCallbacks)
-                .build();
+    protected String getModelName() {
+        return "qwen2.5:0.5b";
     }
 
     @Override
     public boolean handle(Question question, HandlerContext context) throws IOException {
         User user = question.getUser();
-        if (!MODEL_NAME.equals(user.getModel().getChat())) {
+        if (!getModelName().equals(user.getModel().getChat())) {
             return false;
         }
-        logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
+        logger.info("Handle question: {}::{}", getClass().getSimpleName(), getModelName());
+        //Tools
         Map<String, Object> toolContext = new HashMap<>();
         toolContext.put("question", question);
         toolContext.put("handlerContext", context);
-        OllamaOptions ollamaOptions = OllamaOptions.builder()
-                .model(MODEL_NAME)
+        //Message
+        List<Message> messages = new ArrayList<>();
+        messages.add(new SystemMessage(ChatUtils.getPrompt("qwen2.5-1.5b-instruct-system.txt")));
+        messages.add(new UserMessage(question.getContent()));
+        //Options
+        OllamaOptions chatOptions = OllamaOptions.builder()
+                .model(getModelName())
                 .toolContext(toolContext)
                 .build();
-        Prompt prompt = new Prompt(question.getContent(), ollamaOptions);
-        chatClient.prompt(prompt).stream().chatResponse().subscribe(chatResponse -> {
+        //Call
+        chatClient.prompt(new Prompt(messages, chatOptions)).stream().chatResponse().subscribe(chatResponse -> {
             try {
                 String content = chatResponse.getResult().getOutput().getText();
                 String toolName = chatResponse.getResult().getMetadata().get("toolName");
                 Boolean done = chatResponse.getMetadata().get("done");
-                Answer answer = Answer.builder()
-                        .user(user)
+                Answer answer = Answer.builder(user)
                         .content(content)
                         .build();
                 if (Boolean.TRUE.equals(done)) {
@@ -85,14 +107,10 @@ public class OllamaQuestionHandler implements QuestionHandler, InitializingBean 
                 }
                 if (StringUtils.hasText(toolName)) {
                     answer = ChatUtils.deserialize(content, Answer.class);
-                    answer.setUser(userManager.getUser(answer.getUser().getUserId()));
                 }
                 user.getChatSession().sendMessage(answer, context);
-                if (Boolean.TRUE.equals(done)) {
-                    logger.info("Answer complete.");
-                }
             } catch (Exception e) {
-                logger.error("ollama call error", e);
+                logger.error("Ollama call failed.", e);
             }
         });
         return true;

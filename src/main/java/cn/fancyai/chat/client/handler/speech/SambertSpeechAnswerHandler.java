@@ -1,6 +1,7 @@
 package cn.fancyai.chat.client.handler.speech;
 
 import cn.fancyai.chat.client.ChatUtils;
+import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.User;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisAudioFormat;
 import com.alibaba.dashscope.audio.tts.SpeechSynthesisParam;
@@ -17,11 +18,17 @@ public class SambertSpeechAnswerHandler extends AbstractSpeechAnswerHandler {
     private static final Logger logger = LoggerFactory.getLogger(SambertSpeechAnswerHandler.class);
 
     @Override
-    protected byte[] speech(User user, String text) throws NoApiKeyException {
+    protected String getModelName(Answer answer) {
+        return answer.getUser().getModel().getSpeech();
+    }
+
+    @Override
+    protected byte[] speech(Answer answer, String text) throws NoApiKeyException {
+        User user = answer.getUser();
         SpeechSynthesizer synthesizer = new SpeechSynthesizer();
         SpeechSynthesisParam param = SpeechSynthesisParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
-                .model(user.getModel().getSpeech())
+                .model(getModelName(answer))
                 .format(SpeechSynthesisAudioFormat.MP3)
                 .text(text)
                 .build();

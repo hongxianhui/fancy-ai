@@ -14,11 +14,11 @@ public class Answer extends Metadata {
     private String type = TYPE_ANSWER;
     private User user;
     private String content;
-    private Usage usage;
+    private ChatUsage usage;
     private boolean done;
 
-    public static Builder builder() {
-        return new Builder();
+    public static Builder builder(User user) {
+        return new Builder().user(user);
     }
 
     public static class Builder {
@@ -39,8 +39,8 @@ public class Answer extends Metadata {
             return this;
         }
 
-        public Builder usage(Usage usage) {
-            answer.usage = usage;
+        public Builder usage(ChatUsage chatUsage) {
+            answer.usage = chatUsage;
             return this;
         }
 

@@ -1,0 +1,16 @@
+<table style="width: 80vw">
+    <tr>
+        <td><b>名称</b></td>
+        <td><b>类型</b></td>
+        <td><b>大小</b></td>
+        <td><b>状态</b></td>
+        <td><b>日期</b></td>
+    </tr>
+    <tr th:each="document, s:${documents}">
+        <td th:text="${document.fileName}"></td>
+        <td th:text="${document.fileType}"></td>
+        <td th:text="${document.categoryId}"></td>
+        <td th:text="${document.status}"></td>
+        <td th:text="${document.createTime}"></td>
+    </tr>
+</table>

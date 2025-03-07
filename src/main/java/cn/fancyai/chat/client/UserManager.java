@@ -19,7 +19,7 @@ public class UserManager {
 
     @Getter
     @Setter
-    @Value("${ai.default-model}")
+    @Value("${ai.model.default}")
     private String defaultModel;
 
     private final List<User> users = new ArrayList<>();

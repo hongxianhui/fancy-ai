@@ -3,19 +3,65 @@ $(function () {
     let waitingMessageId = 0;
     let receiveMessageId = 0;
     let prompt = "ASK";
+    let returnSendMessage = true;
     let userId = 0;
 
+    $.createMessageElement = function createMessageElement(content, isSent) {
+        const currentTime = Date.now();
+        const timeHtml = checkShowTime(currentTime) ?
+            `<div class="center-time">${formatTime(currentTime)}</div>` : '';
+        return `
+                    ${timeHtml}
+                    <div class="message ${isSent ? 'sent' : 'received'}">
+                        <div class="content">${content}</div>
+                    </div>
+                `;
+    }
+
     addChatOnOpenListener(function (evt) {
-        $(createMessageElement('后端服务连接成功!', false)).appendTo($("#messages"));
+        $($.createMessageElement('后端服务连接成功!', false)).appendTo($("#messages"));
         addWaitingMessage();
     });
+
+    addOnFileUploadListener(function (formData) {
+        let file = formData.getAll("file");
+        if (!file.length) {
+            return;
+        }
+        $($.createMessageElement('我要上传新的知识库文档', true)).appendTo($("#messages"));
+        addWaitingMessage();
+        $('#message-input').val('');
+        receiveMessageId = `receive-${Date.now()}`;
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+        $.ajax({
+            url: '/knowledge?userId=' + userId, // 替换为实际的上传接口地址
+            type: 'POST',
+            data: formData,
+            processData: false, // 不处理数据
+            contentType: false, // 不设置内容类型，让浏览器自动设置
+            success: function (response) {
+                // 处理成功响应
+                console.log(response);
+            },
+            error: function (xhr, status, error) {
+                // 处理错误响应
+                console.log(error);
+            }
+        });
+    })
+
+    addOnFileContentListener(function (base64, model) {
+        $('#messages').append($.createMessageElement("<img alt='' class='image' src='" + base64 + "'><span class='token splitter'></span>帮我理解一下这张图片的内容", true));
+        sendMessage("理解图片内容（" + model + "）：" + base64, false)
+    });
+
     addChatOnMessageListener(function (evt) {
         const data = JSON.parse(evt.data);
         userId = data.user.userId;
         $(`#${waitingMessageId}`).remove();
         let messageElement = $(`#${receiveMessageId}`);
         if (!messageElement.length) {
-            messageElement = $(createMessageElement('', false));
+            messageElement = $($.createMessageElement('', false));
             messageElement.attr('id', receiveMessageId).appendTo($("#messages"));
         }
         data.content = data.content.replace(/\n\n/g, "<span class='token splitter'></span>");
@@ -28,13 +74,13 @@ $(function () {
             }
         }
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
-        if (data.usage) {
+        if (data.usage && data.usage.cost) {
             $("<span>").addClass("token splitter").appendTo(messageElement.children(".content"));
             $("<span>").addClass("token usage").text(data.usage.cost).appendTo(messageElement.children(".content"));
         }
         $('#messages').scrollTop($('#messages')[0].scrollHeight);
         switch (data.user.model.chat) {
-            case "qwen2.5:0.5b":
+            case "qwen2.5-1.5b-instruct":
                 document.title = "小欧 Fancy AI";
                 break;
             case "qwen-plus":
@@ -42,6 +88,9 @@ $(function () {
                 break;
             case "deepseek-r1":
                 document.title = "小迪 Fancy AI";
+                break;
+            case "qwen-coder-plus":
+                document.title = "小程 Fancy AI";
         }
     });
 
@@ -61,22 +110,10 @@ $(function () {
         return false;
     }
 
-    function createMessageElement(content, isSent) {
-        const currentTime = Date.now();
-        const timeHtml = checkShowTime(currentTime) ?
-            `<div class="center-time">${formatTime(currentTime)}</div>` : '';
-        return `
-                    ${timeHtml}
-                    <div class="message ${isSent ? 'sent' : 'received'}">
-                        <div class="content">${content}</div>
-                    </div>
-                `;
-    }
-
     function sendMessage(text, show) {
         const content = text || $('#message-input').val().trim();
         if (!content) return;
-        if (show) $('#messages').append(createMessageElement(content, true));
+        if (show) $('#messages').append($.createMessageElement(content, true));
         addWaitingMessage();
         wsChat.send(JSON.stringify({"content": content}));
         $('#message-input').val('');
@@ -94,6 +131,26 @@ $(function () {
                 <div class="loading-icon"></div>
             </div>
         `);
+    }
+
+    $.queryKnowledge = function () {
+        $($.createMessageElement('我要查询知识库文档', true)).appendTo($("#messages"));
+        addWaitingMessage();
+        $('#message-input').val('');
+        receiveMessageId = `receive-${Date.now()}`;
+        $('#messages').scrollTop($('#messages')[0].scrollHeight);
+        $.ajax({
+            url: '/knowledge?userId=' + userId, // 替换为实际的上传接口地址
+            type: 'GET',
+            success: function (response) {
+                // 处理成功响应
+                console.log(response);
+            },
+            error: function (xhr, status, error) {
+                // 处理错误响应
+                console.log(error);
+            }
+        });
     }
 
     //渲染提示词列表
@@ -130,43 +187,14 @@ $(function () {
     });
 
     $('#message-input').keypress(function (e) {
-        if (e.which === 13) {
+        if (!isMobile() && e.which === 13) {
             sendMessage(null, true);
             return false;
         }
     });
 
-    // 创建隐藏的文件输入框
-    const $fileInput = $('<input type="file" accept="image/*" style="display: none;">');
-
-    $.openFIleUpload = function openFIleUpload(modelName) {
-        $fileInput.attr("model", modelName).trigger('click');
+    function isMobile() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        return /android|iphone|ipad|tablet|mobile/i.test(userAgent);
     }
-
-    // 文件选择事件
-    $fileInput.on('change', function (e) {
-        const file = e.target.files;
-        if (!file) return;
-
-        // 校验文件类型‌:ml-citation{ref="2,5" data="citationList"}
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!validTypes.includes(file[0].type)) {
-            $(createMessageElement('仅支持JPG/PNG/GIF格式的图片', false)).appendTo($("#messages"));
-            return;
-        }
-
-        if (file[0].size > 512 * 1024) {
-            $(createMessageElement('文件大小不能超过512K。', false)).appendTo($("#messages"));
-            return;
-        }
-
-        // 读取文件内容‌:ml-citation{ref="1,4" data="citationList"}
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const base64 = e.target.result;
-            $('#messages').append(createMessageElement("<img alt='' class='image' src='" + base64 + "'><span class='token splitter'></span>帮我理解一下这张图片的内容", true));
-            sendMessage("理解图片内容（" + $fileInput.attr("model") + "）：" + base64, false)
-        };
-        reader.readAsDataURL(file[0]);
-    });
 });

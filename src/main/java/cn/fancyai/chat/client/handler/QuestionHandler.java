@@ -4,12 +4,16 @@ import cn.fancyai.chat.objects.Question;
 
 /**
  * 100:SystemQuestionHandler
- * 490:ImageVLQuestionHandler
- * 500:PosterQuestionHandler
- * 510:ImageQuestionHandler
- * 520:OllamaQuestionHandler
+ * <p>
+ * 410:PosterQuestionHandler
+ * 420:GeneraImageQuestionHandler
+ * 430:ImageVLQuestionHandler
+ * <p>
+ * 510:OllamaQuestionHandler
+ * 520:QWen25QuestionHandler
  * 530:QWenPlusQuestionHandler
- * 540:DeepSeekR1QuestionHandler
+ * 540:QWenCoderPlusQuestionHandler
+ * 550:DeepSeekR1QuestionHandler
  */
 public interface QuestionHandler {
 

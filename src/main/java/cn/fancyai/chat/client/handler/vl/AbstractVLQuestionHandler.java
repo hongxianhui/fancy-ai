@@ -4,8 +4,8 @@ import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
 import cn.fancyai.chat.objects.Answer;
+import cn.fancyai.chat.objects.ChatUsage;
 import cn.fancyai.chat.objects.Question;
-import cn.fancyai.chat.objects.Usage;
 import cn.fancyai.chat.objects.User;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversation;
 import com.alibaba.dashscope.aigc.multimodalconversation.MultiModalConversationParam;
@@ -67,7 +67,7 @@ public abstract class AbstractVLQuestionHandler implements QuestionHandler {
                 .build();
         MultiModalConversationParam.MultiModalConversationParamBuilder<?, ?> builder = MultiModalConversationParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
-                .model(user.getModel().getImage())
+                .model(user.getModel().getTool())
                 .messages(Collections.singletonList(userMessage))
                 .incrementalOutput(true);
         customizeGenerationParam(question, builder);
@@ -77,16 +77,16 @@ public abstract class AbstractVLQuestionHandler implements QuestionHandler {
     @Override
     public boolean handle(Question question, HandlerContext context) throws Exception {
         Object checkResult = checkQuestion(question);
-        User user = question.getUser();
         if (Boolean.FALSE.equals(checkResult)) {
             return false;
         }
+        User user = question.getUser();
         if (checkResult instanceof Answer) {
             user.getChatSession().sendMessage((Answer) checkResult, context);
             return true;
         }
-        logger.info("Handler: {}, Question: {}", getClass().getSimpleName(), ChatUtils.serialize(question));
-        question.getMetadata().put(Question.META_IS_THINKING, true);
+        logger.info("Handle question: {}::{}", getClass().getSimpleName(), getModelName(question));
+        user.getModel().setTool(getModelName(question));
         MultiModalConversation multiModalConversation = new MultiModalConversation();
         multiModalConversation.streamCall(getParameter(question)).blockingForEach(result -> {
             try {
@@ -96,13 +96,12 @@ public abstract class AbstractVLQuestionHandler implements QuestionHandler {
                 }
                 if (answer.isDone()) {
                     MultiModalConversationUsage usage = result.getUsage();
-                    Usage chatUsage = Usage.builder().user(user)
+                    ChatUsage chatUsage = ChatUsage.builder().user(user)
                             .completionTokens(usage.getOutputTokens())
                             .promptTokens(usage.getInputTokens())
-                            .imageTokens(usage.getImageTokens())
+//                            .imageTokens(usage.getImageTokens())
                             .build();
                     answer.setUsage(chatUsage);
-                    logger.info("Answer complete, cost: {}", ChatUtils.serialize(chatUsage));
                 }
                 user.getChatSession().sendMessage(answer, context);
             } catch (Exception e) {

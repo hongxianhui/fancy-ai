@@ -3,7 +3,7 @@ package cn.fancyai.chat.client.handler;
 import cn.fancyai.chat.objects.Answer;
 
 /**
- * 10:TTSQuestionHandler
+ * 10:CosySpeechAnswerHandler
  * 20:SambertSpeechAnswerHandler
  */
 public interface AnswerHandler {

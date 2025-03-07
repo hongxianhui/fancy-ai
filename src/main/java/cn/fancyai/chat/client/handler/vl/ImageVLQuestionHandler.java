@@ -10,7 +10,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(490)
+@Order(430)
 public class ImageVLQuestionHandler extends AbstractVLQuestionHandler {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -33,22 +33,19 @@ public class ImageVLQuestionHandler extends AbstractVLQuestionHandler {
         }
         String imageModel = getModelName(question);
         if (imageModel == null) {
-            return Answer.builder()
-                    .user(question.getUser())
+            return Answer.builder(question.getUser())
                     .content("模型不存在，请提供正确的模型名称。")
                     .done()
                     .build();
         }
-        question.getUser().getModel().setImage(imageModel);
         return Boolean.TRUE;
     }
 
     @Override
     protected Answer getAnswerOnStream(MultiModalConversationResult result, Question question) {
-        MultiModalConversationOutput.Choice choice = result.getOutput().getChoices().getFirst();
-        String content = (String) choice.getMessage().getContent().getFirst().get("text");
-        Answer.Builder builder = Answer.builder()
-                .user(question.getUser())
+        MultiModalConversationOutput.Choice choice = result.getOutput().getChoices().get(0);
+        String content = (String) choice.getMessage().getContent().get(0).get("text");
+        Answer.Builder builder = Answer.builder(question.getUser())
                 .type(Answer.TYPE_ANSWER)
                 .content(content);
         if (!choice.getFinishReason().isEmpty() && !"null".equals(choice.getFinishReason())) {

@@ -14,11 +14,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(510)
+@Order(420)
 public class GeneraImageQuestionHandler extends AbstractImageQuestionHandler {
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(GeneraImageQuestionHandler.class);
 
-    private String getImageModel(String content) {
+    @Override
+    protected String getModelName(Question question) {
+        String content = question.getContent();
         if (content.contains("（FLUX）")) {
             return "flux-dev";
         }
@@ -45,15 +47,12 @@ public class GeneraImageQuestionHandler extends AbstractImageQuestionHandler {
         if (!question.getContent().startsWith("一键成图")) {
             return Boolean.FALSE;
         }
-        String imageModel = getImageModel(question.getContent());
-        if (imageModel == null) {
-            return Answer.builder()
-                    .user(question.getUser())
-                    .content(ChatUtils.getText("image-vl.html"))
+        if (getModelName(question) == null) {
+            return Answer.builder(question.getUser())
+                    .content(ChatUtils.getConstant("image-vl.html"))
                     .done()
                     .build();
         }
-        question.getUser().getModel().setImage(imageModel);
         return Boolean.TRUE;
     }
 
@@ -61,10 +60,9 @@ public class GeneraImageQuestionHandler extends AbstractImageQuestionHandler {
     protected ImageSynthesisResult call(Question question) throws NoApiKeyException {
         User user = question.getUser();
         String content = question.getContent();
-        String model = getImageModel(content);
         ImageSynthesisParam param = ImageSynthesisParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
-                .model(model)
+                .model(getModelName(question))
                 .prompt(content.substring(content.indexOf("：") + 1))
                 .n(1)
                 .build();

@@ -7,6 +7,7 @@ import com.alibaba.dashscope.exception.NoApiKeyException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.micrometer.common.util.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,14 @@ public class ChatUtils {
         return mapper.readValue(json, clazz);
     }
 
-    public static String getText(String resource) {
+    public static String getConstant(String resource) {
         String text = ResourceUtils.getText("classpath:/constant/" + resource);
-        return text.replaceAll("\r\n", "");
+        return text.replaceAll("\r\n", "").replaceAll("\n", "");
+    }
+
+    public static String getPrompt(String resource) {
+        String text = ResourceUtils.getText("classpath:/prompt/" + resource);
+        return text.replaceAll("\r\n", "").replaceAll("\n", "");
     }
 
     public static Map<String, String> parseQueryParams(String url) throws Exception {
@@ -52,7 +58,7 @@ public class ChatUtils {
         Matcher matcher = pattern.matcher(query);
         while (matcher.find()) {
             String key = URLDecoder.decode(matcher.group(1), StandardCharsets.UTF_8);  // 解码参数‌:ml-citation{ref="1" data="citationList"}
-            String value = matcher.group(2).isEmpty() ? "" : URLDecoder.decode(matcher.group(2), StandardCharsets.UTF_8);
+            String value = matcher.group(2).isEmpty() ? null : URLDecoder.decode(matcher.group(2), StandardCharsets.UTF_8);
             params.put(key, value);
         }
         return params;
@@ -61,11 +67,16 @@ public class ChatUtils {
     public static String getApiKey(User user) throws NoApiKeyException {
         String apiKey = user.getApiKey();
         if (Strings.isBlank(apiKey)) {
-            apiKey = ServerApplication.applicationContext.getEnvironment().getProperty("spring.ai.dashscope.api-key");
+            apiKey = ServerApplication.applicationContext.getEnvironment().getProperty("ai.api-key.default");
         }
-        if (Strings.isBlank(apiKey)) {
-            throw new NoApiKeyException();
+        if (StringUtils.isBlank(apiKey)) {
+            apiKey = null;
         }
         return apiKey;
+    }
+
+    public static void sendMessage(User user, String message) throws IOException {
+        Answer answer = Answer.builder(user).content(message).done().build();
+        user.getChatSession().sendMessage(new TextMessage(serialize(answer)));
     }
 }
