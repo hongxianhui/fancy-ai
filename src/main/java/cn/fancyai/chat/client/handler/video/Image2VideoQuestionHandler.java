@@ -70,7 +70,7 @@ public class Image2VideoQuestionHandler extends AbstractVideoQuestionHandler {
         VideoSynthesisParam param = VideoSynthesisParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
                 .model(getModelName(question))
-                .imgUrl("http://fancy-ai.cn/image/sample.jpg")
+                .imgUrl("http://fancy-ai.cn/image/" + imageName)
                 .prompt(prompt)
                 .extendPrompt(true)
                 .build();
