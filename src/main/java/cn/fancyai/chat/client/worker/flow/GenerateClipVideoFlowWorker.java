@@ -14,9 +14,7 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,7 +29,7 @@ public class GenerateClipVideoFlowWorker {
 
     private String videoPlan;
     private List<ClipFrame> clipFrames;
-    private ChatUsage chatUsage = ChatUsage.builder().build();
+    private final ChatUsage chatUsage = ChatUsage.builder().build();
 
     public GenerateClipVideoFlowWorker(User user, String prompt, File outputFile) {
         this.prompt = prompt;
@@ -40,8 +38,7 @@ public class GenerateClipVideoFlowWorker {
     }
 
     public GenerateClipVideoFlowWorker generateVideoPlan() throws Exception {
-        //        user.getModel().setTool("deepseek-r1");
-        user.getModel().setTool("qwen2.5-1.5b-instruct");
+        user.getModel().setTool("qwen-plus");
         TextGenerationAPI textApi = ServerApplication.applicationContext.getBean("textGenerationAPI", TextGenerationAPI.class);
         videoPlan = textApi.generate(user, prompt, ChatUtils.getPrompt("clip-video-generator-prompt.txt"), chatUsage);
         return this;
@@ -70,13 +67,10 @@ public class GenerateClipVideoFlowWorker {
     }
 
     public GenerateClipVideoFlowWorker generateImages(Consumer<ClipFrame> callback) throws Exception {
-//        user.getModel().setTool("flux-dev");
         user.getModel().setTool("wanx2.1-t2i-turbo");
         ImageGenerationAPI imageAPI = ServerApplication.applicationContext.getBean("imageGenerationAPI", ImageGenerationAPI.class);
         for (ClipFrame clipFrame : clipFrames) {
             String imageUrl = imageAPI.generate(user, clipFrame.getImagePrompt(), chatUsage);
-//            Thread.sleep(1500);
-//            String imageUrl = "file:///D:\\tempfile\\flow\\" + clipFrame.getNo() + ".png";
             clipFrame.setImageUrl(imageUrl);
             callback.accept(clipFrame);
         }
@@ -91,11 +85,6 @@ public class GenerateClipVideoFlowWorker {
             byte[] speechBytes = speechAPI.generate(user, clipFrame.getSpeechText(), chatUsage);
             IOUtils.copy(new ByteArrayInputStream(speechBytes), new FileOutputStream(tempFolder + File.separatorChar + "flow" + File.separatorChar + clipFrame.getNo() + ".mp3"));
             clipFrame.setAudio(speechBytes);
-//            Thread.sleep(1000);
-//            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-//            File audioFile = new File(tempFolder + File.separatorChar + "flow" + File.separatorChar + clipFrame.getNo() + ".wav");
-//            IOUtils.copy(new FileInputStream(audioFile), byteArrayOutputStream);
-//            clipFrame.setAudio(byteArrayOutputStream.toByteArray());
             callback.accept(clipFrame);
         }
         return this;
