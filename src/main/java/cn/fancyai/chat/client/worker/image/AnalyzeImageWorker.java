@@ -1,5 +1,6 @@
-package cn.fancyai.chat.client.worker;
+package cn.fancyai.chat.client.worker.image;
 
+import cn.fancyai.chat.client.worker.UploadFileWorker;
 import lombok.Getter;
 
 @Getter

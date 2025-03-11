@@ -9,8 +9,10 @@ public class Answer extends Metadata {
     public static final String TYPE_THINK = "think";
     public static final String TYPE_ANSWER = "answer";
     public static final String TYPE_TOOL = "tool";
+    public static final String TYPE_FLOW = "flow";
     public static final String TYPE_IMAGE = "image";
     public static final String TYPE_VIDEO = "video";
+    public static final String TYPE_NEW = "new";
 
     private String type = TYPE_ANSWER;
     private User user;

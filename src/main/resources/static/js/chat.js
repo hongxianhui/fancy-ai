@@ -87,6 +87,11 @@ $(function () {
 
     addChatOnMessageListener(function (evt) {
         const data = JSON.parse(evt.data);
+        if ("new" === data.type) {
+            receiveMessageId = `receive-${Date.now()}`;
+            $('#messages').scrollTop($('#messages')[0].scrollHeight);
+            return;
+        }
         userId = data.user.userId;
         $(`#${waitingMessageId}`).remove();
         let messageElement = $(`#${receiveMessageId}`);
@@ -106,10 +111,6 @@ $(function () {
         if ("video" === data.type) {
             const videoData = JSON.parse(data.content);
             data.content = "<video class='token video' controls><source src='" + videoData.videoUrl + "'></video>";
-            if (videoData.actual_prompt) {
-                data.content += "<span class='token splitter'></span>";
-                data.content += "<span class='token media-desc'>" + imageData.actual_prompt + "</span>";
-            }
         }
         $("<span>").addClass("token").addClass(data.type).html(data.content).appendTo(messageElement.children(".content"));
         if (data.usage && data.usage.cost) {

@@ -70,8 +70,10 @@ public class Image2VideoQuestionHandler extends AbstractVideoQuestionHandler {
         VideoSynthesisParam param = VideoSynthesisParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
                 .model(getModelName(question))
-                .imgUrl("http://fancy-ai.cn/image/" + imageName)
+//                .imgUrl("http://fancy-ai.cn/image/" + imageName)
+                .imgUrl("http://fancy-ai.cn/image/b.jpg")
                 .prompt(prompt)
+                .size("720*1280")
                 .extendPrompt(true)
                 .build();
         VideoSynthesisResult result = videoSynthesis.asyncCall(param);
@@ -81,7 +83,7 @@ public class Image2VideoQuestionHandler extends AbstractVideoQuestionHandler {
                 .type(Answer.TYPE_ANSWER)
                 .content("任务已创建，请稍候（5-10分钟）点击任务ID查询" +
                         "<span class=\"token splitter\"></span>" +
-                        "<a href=\"javascript:$('#message-input').val('查询视频生成任务状态：" + taskId + "')\">" + taskId + "</a>")
+                        "<a href=\"javascript:$('#message-input').val('查询视频生成任务状态（" + getModelName(question) + "）：" + taskId + "')\">" + taskId + "</a>")
                 .done()
                 .build();
     }

@@ -29,9 +29,11 @@ public class SambertSpeechAnswerHandler extends AbstractSpeechAnswerHandler {
         SpeechSynthesisParam param = SpeechSynthesisParam.builder()
                 .apiKey(ChatUtils.getApiKey(user))
                 .model(getModelName(answer))
-                .format(SpeechSynthesisAudioFormat.MP3)
+                .format(SpeechSynthesisAudioFormat.WAV)
+                .sampleRate(48000)
                 .text(text)
                 .build();
         return synthesizer.call(param).array();
     }
+
 }

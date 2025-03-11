@@ -27,7 +27,12 @@ public class SystemQuestionHandler implements QuestionHandler {
     public boolean handle(Question question, HandlerContext context) throws Exception {
         String content = question.getContent();
         User user = question.getUser();
-        if (content.startsWith("管理知识库")) {
+        if (content.startsWith("智能体示例")) {
+            logger.info("Question handler {}", getClass().getSimpleName());
+            context.mute();
+            user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("flows.html")), context);
+            return true;
+        }        if (content.startsWith("管理知识库")) {
             logger.info("Question handler {}", getClass().getSimpleName());
             context.mute();
             user.getChatSession().sendMessage(getAnswer(user, ChatUtils.getConstant("knowledge.html")), context);

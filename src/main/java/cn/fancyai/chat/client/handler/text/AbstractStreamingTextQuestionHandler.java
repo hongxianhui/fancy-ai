@@ -106,8 +106,8 @@ public abstract class AbstractStreamingTextQuestionHandler implements QuestionHa
             if (answer.isDone()) {
                 Usage usage = chatResponse.getMetadata().getUsage();
                 ChatUsage chatUsage = ChatUsage.builder().user(user)
-                        .promptTokens(usage.getPromptTokens())
-                        .completionTokens(usage.getTotalTokens())
+                        .promptTokens(usage.getPromptTokens().intValue())
+                        .completionTokens(usage.getTotalTokens().intValue())
                         .build();
                 answer.setUsage(chatUsage);
             }

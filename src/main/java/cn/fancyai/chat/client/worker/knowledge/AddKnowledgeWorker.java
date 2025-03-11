@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client.worker;
+package cn.fancyai.chat.client.worker.knowledge;
 
 import com.aliyun.sdk.service.bailian20231229.models.*;
 import org.apache.commons.codec.digest.DigestUtils;

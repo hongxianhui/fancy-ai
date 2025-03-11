@@ -33,10 +33,9 @@ public class DeepSeekR1QuestionHandle extends AbstractStreamingTextQuestionHandl
             }
             builder.type(Answer.TYPE_ANSWER).content(content);
         }
-        if (finishReason != null && !"null".equals(finishReason.toUpperCase())) {
+        if (finishReason != null && !"null".equalsIgnoreCase(finishReason)) {
             builder.done();
         }
         return builder.build();
     }
-
 }

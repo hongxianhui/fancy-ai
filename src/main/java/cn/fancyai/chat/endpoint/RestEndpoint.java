@@ -3,10 +3,10 @@ package cn.fancyai.chat.endpoint;
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.UserManager;
 import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
-import cn.fancyai.chat.client.worker.AddKnowledgeWorker;
-import cn.fancyai.chat.client.worker.AnalyzeImageWorker;
-import cn.fancyai.chat.client.worker.Image2VideoPrepareWorker;
-import cn.fancyai.chat.client.worker.ListKnowledgeWorker;
+import cn.fancyai.chat.client.worker.image.AnalyzeImageWorker;
+import cn.fancyai.chat.client.worker.image.Image2VideoPrepareWorker;
+import cn.fancyai.chat.client.worker.knowledge.AddKnowledgeWorker;
+import cn.fancyai.chat.client.worker.knowledge.ListKnowledgeWorker;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.User;
 import com.aliyun.core.utils.IOUtils;
@@ -16,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.springframework.web.socket.TextMessage;
@@ -41,7 +44,7 @@ public class RestEndpoint {
 
     @GetMapping("/prompts")
     public List<String> prompts() {
-        return List.of("选择聊天角色", "选择朗读音色", "关闭语音朗读", "图片相关功能", "视频相关功能", "管理知识库");
+        return List.of("选择聊天角色", "选择朗读音色", "关闭语音朗读", "图片相关功能", "视频相关功能", "管理知识库", "智能体示例");
     }
 
     @PostMapping("/analyzeImage")
@@ -81,8 +84,11 @@ public class RestEndpoint {
         }
     }
 
-    @GetMapping("/image/{fileName}")
-    public ResponseEntity<StreamingResponseBody> displayImage(@PathVariable String fileName) throws IOException {
+    @GetMapping("/download")
+    public ResponseEntity<StreamingResponseBody> download(@RequestParam String fileName) throws IOException {
+        if (fileName.contains("..")) {
+            return ResponseEntity.notFound().build();
+        }
         File file = new File(tempFileFolder, fileName);
         if (!file.exists()) {
             throw new RuntimeException("File not found");

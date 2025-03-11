@@ -1,6 +1,7 @@
-package cn.fancyai.chat.client.worker;
+package cn.fancyai.chat.client.worker.knowledge;
 
 import cn.fancyai.chat.ServerApplication;
+import cn.fancyai.chat.client.worker.UploadFileWorker;
 import com.aliyun.auth.credentials.Credential;
 import com.aliyun.auth.credentials.provider.StaticCredentialProvider;
 import com.aliyun.sdk.service.bailian20231229.AsyncClient;

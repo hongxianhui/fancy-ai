@@ -29,6 +29,13 @@ public class VideoResultQuestionHandler extends AbstractVideoQuestionHandler {
 
     @Override
     protected String getModelName(Question question) {
+        String content = question.getContent();
+        if (content.contains("（wanx2.1-i2v-turbo）")) {
+            return "wanx2.1-i2v-turbo";
+        }
+        if (content.contains("（wanx2.1-i2v-plus）")) {
+            return "wanx2.1-i2v-plus";
+        }
         return null;
     }
 
@@ -55,12 +62,22 @@ public class VideoResultQuestionHandler extends AbstractVideoQuestionHandler {
         String taskId = getTaskId(question.getContent());
         VideoSynthesisOutput output = result.getOutput();
         String taskStatus = output.getTaskStatus();
+        logger.info("taskId: {}, taskStatus: {}", taskId, taskStatus);
         if ("SUCCEEDED".equals(taskStatus)) {
             context.unmute();
+            user.getModel().setTool(getModelName(question));
             return Answer.builder(user)
                     .type(Answer.TYPE_VIDEO)
                     .content(ChatUtils.serialize(output))
                     .usage(ChatUsage.builder().user(user).videoDuration(5).build())
+                    .done()
+                    .build();
+        }
+        if ("FAILED".equals(taskStatus)) {
+            context.unmute();
+            return Answer.builder(user)
+                    .type(Answer.TYPE_ANSWER)
+                    .content("视频生成失败：" + output.getMessage())
                     .done()
                     .build();
         }
@@ -69,7 +86,7 @@ public class VideoResultQuestionHandler extends AbstractVideoQuestionHandler {
                 .type(Answer.TYPE_ANSWER)
                 .content("任务还在执行中，点击任务ID可再次查询" +
                         "<span class=\"token splitter\"></span>" +
-                        "<a href=\"javascript:$('#message-input').val('查询视频生成任务状态：" + taskId + "')\">" + taskId + "</a>")
+                        "<a href=\"javascript:$('#message-input').val('查询视频生成任务状态（" + getModelName(question) + "）：" + taskId + "')\">" + taskId + "</a>")
                 .done()
                 .build();
     }

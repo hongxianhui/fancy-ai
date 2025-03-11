@@ -1,4 +1,4 @@
-package cn.fancyai.chat.client.worker;
+package cn.fancyai.chat.client.worker.knowledge;
 
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.User;
