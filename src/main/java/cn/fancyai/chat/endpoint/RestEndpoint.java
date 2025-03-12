@@ -107,7 +107,7 @@ public class RestEndpoint {
                 .body(outputStream -> IOUtils.copy(new FileInputStream(file), outputStream));
     }
 
-    @PostMapping("/api/clip")
+    @PostMapping("/api/v1/clip")
     public ResponseEntity<Map<String, Object>> createClipVideo(@RequestBody ClipVideoVO clipVideoVO, @RequestParam String token) {
         if (!token.equals("www.fancy-ai.cn")) {
             return ResponseEntity.ok(Map.of("success", Boolean.FALSE, "data", "token值不正确"));
