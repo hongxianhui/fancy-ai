@@ -1,15 +1,20 @@
 package cn.fancyai.chat.endpoint;
 
+import cn.fancyai.chat.ServerApplication;
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.UserManager;
 import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
+import cn.fancyai.chat.client.worker.flow.GenerateClipVideoFlowWorker;
 import cn.fancyai.chat.client.worker.image.AnalyzeImageWorker;
 import cn.fancyai.chat.client.worker.image.Image2VideoPrepareWorker;
 import cn.fancyai.chat.client.worker.knowledge.AddKnowledgeWorker;
 import cn.fancyai.chat.client.worker.knowledge.ListKnowledgeWorker;
+import cn.fancyai.chat.endpoint.vo.ClipVideoVO;
+import cn.fancyai.chat.objects.APIUser;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.User;
 import com.aliyun.core.utils.IOUtils;
+import com.aliyun.core.utils.StringUtils;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +34,11 @@ import org.thymeleaf.TemplateEngine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class RestEndpoint {
@@ -96,5 +105,47 @@ public class RestEndpoint {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(Files.probeContentType(file.toPath())))
                 .body(outputStream -> IOUtils.copy(new FileInputStream(file), outputStream));
+    }
+
+    @PostMapping("/api/clip")
+    public ResponseEntity<Map<String, Object>> createClipVideo(@RequestBody ClipVideoVO clipVideoVO, @RequestParam String token) {
+        if (!token.equals("www.fancy-ai.cn")) {
+            return ResponseEntity.ok(Map.of("success", Boolean.FALSE, "data", "token值不正确"));
+        }
+        String[] images = clipVideoVO.getImages();
+        String[] text = clipVideoVO.getText();
+        String bgm = clipVideoVO.getBgm();
+        String voice = clipVideoVO.getVoice();
+
+        if (StringUtils.isBlank(bgm)) {
+            bgm = "http://fancy-ai.cn/download?fileName=/flow/bgm.wav";
+        }
+
+        if (StringUtils.isBlank(voice)) {
+            voice = "sambert-zhishu-v1";
+        }
+
+        if (images.length == 0 || text.length == 0 || images.length != text.length) {
+            return ResponseEntity.ok(Map.of("success", Boolean.FALSE, "data", "参数不正确，图片和解说词地址URL不能为空，且数量需一致。"));
+        }
+
+        if (images.length > 10) {
+            return ResponseEntity.ok(Map.of("success", Boolean.FALSE, "data", "参数不正确，最多支持10个图片。"));
+        }
+
+        String outputVideoFileName = "clipShow-" + System.currentTimeMillis() + ".mp4";
+        try {
+            File outputVideoFile = new File(tempFileFolder, outputVideoFileName);
+            InputStream bgmAudioSource = new URL(bgm).openStream();
+            String publicApiKey = ServerApplication.applicationContext.getEnvironment().getProperty("ai.api-key.public");
+            new GenerateClipVideoFlowWorker(new APIUser(publicApiKey), images, text, outputVideoFile)
+                    .generateSpeech(voice)
+                    .generateSubtitles()
+                    .generateVideo(bgmAudioSource);
+        } catch (Exception e) {
+            logger.error("generate clip video failed.", e);
+            return ResponseEntity.ok(Map.of("success", Boolean.FALSE, "data", e.getMessage()));
+        }
+        return ResponseEntity.ok(Map.of("success", Boolean.TRUE, "data", "http://fancy-ai.cn/download?fileName=/flow/" + outputVideoFileName));
     }
 }

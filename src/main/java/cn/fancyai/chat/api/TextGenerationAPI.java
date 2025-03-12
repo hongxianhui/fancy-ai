@@ -17,9 +17,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.socket.TextMessage;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -55,18 +53,14 @@ public class TextGenerationAPI {
                 chatUsage.setFee(chatUsage.getFee() + questionFee + answerFee);
             }
             Answer answer = builder.build();
-            try {
-                user.getChatSession().sendMessage(new TextMessage(ChatUtils.serialize(answer)));
-            } catch (IOException e) {
-                //ignore
-            }
+            ChatUtils.sendMessage(user, answer);
             result.append(content);
             if (answer.isDone()) {
                 latch.countDown();
             }
         }, new ChatExceptionConsumer(user));
         if (!latch.await(90, TimeUnit.SECONDS)) {
-            user.getChatSession().sendMessage(new TextMessage(ChatUtils.serialize(Answer.builder(user).content("模型输出超时，请稍候再试。").done().build())));
+            ChatUtils.sendMessage(user, "模型输出超时，请稍候再试。");
         }
         return result.toString();
     }

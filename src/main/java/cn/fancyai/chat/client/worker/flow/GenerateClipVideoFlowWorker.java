@@ -5,6 +5,7 @@ import cn.fancyai.chat.api.ImageGenerationAPI;
 import cn.fancyai.chat.api.SpeechGenerationAPI;
 import cn.fancyai.chat.api.TextGenerationAPI;
 import cn.fancyai.chat.client.ChatUtils;
+import cn.fancyai.chat.objects.APIUser;
 import cn.fancyai.chat.objects.ChatUsage;
 import cn.fancyai.chat.objects.User;
 import lombok.Getter;
@@ -13,10 +14,10 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -25,20 +26,31 @@ import java.util.function.Consumer;
 public class GenerateClipVideoFlowWorker {
     private final String prompt;
     private final User user;
-    private final File outputFile;
+    private final File outputVideoFile;
 
     private String videoPlan;
     private List<ClipFrame> clipFrames;
     private final ChatUsage chatUsage = ChatUsage.builder().build();
 
-    public GenerateClipVideoFlowWorker(User user, String prompt, File outputFile) {
+    public GenerateClipVideoFlowWorker(User user, String prompt, File outputVideoFile) {
         this.prompt = prompt;
         this.user = user;
-        this.outputFile = outputFile;
+        this.outputVideoFile = outputVideoFile;
     }
 
-    public GenerateClipVideoFlowWorker generateVideoPlan() throws Exception {
-        user.getModel().setTool("qwen-plus");
+
+    public GenerateClipVideoFlowWorker(APIUser user, String[] imageUrls, String[] speeches, File outputVideoFile) {
+        this.user = user;
+        this.outputVideoFile = outputVideoFile;
+        this.prompt = null;
+        this.clipFrames = new ArrayList<>(imageUrls.length);
+        for (int i = 0; i < imageUrls.length; i++) {
+            clipFrames.add(new ClipFrame(i + 1, speeches[i], imageUrls[i]));
+        }
+    }
+
+    public GenerateClipVideoFlowWorker generateVideoPlan(String model) throws Exception {
+        user.getModel().setTool(model);
         TextGenerationAPI textApi = ServerApplication.applicationContext.getBean("textGenerationAPI", TextGenerationAPI.class);
         videoPlan = textApi.generate(user, prompt, ChatUtils.getPrompt("clip-video-generator-prompt.txt"), chatUsage);
         return this;
@@ -66,34 +78,46 @@ public class GenerateClipVideoFlowWorker {
         return this;
     }
 
-    public GenerateClipVideoFlowWorker generateImages(Consumer<ClipFrame> callback) throws Exception {
-        user.getModel().setTool("wanx2.1-t2i-turbo");
+    public GenerateClipVideoFlowWorker generateImages(String model, Consumer<ClipFrame> callback) throws Exception {
+        user.getModel().setTool(model);
         ImageGenerationAPI imageAPI = ServerApplication.applicationContext.getBean("imageGenerationAPI", ImageGenerationAPI.class);
         for (ClipFrame clipFrame : clipFrames) {
-            String imageUrl = imageAPI.generate(user, clipFrame.getImagePrompt(), chatUsage);
-            clipFrame.setImageUrl(imageUrl);
+//            String imageUrl = imageAPI.generate(user, clipFrame.getImagePrompt(), chatUsage);
+//            clipFrame.setImageUrl(imageUrl);
             callback.accept(clipFrame);
         }
         return this;
     }
 
-    public GenerateClipVideoFlowWorker generateSpeech(Consumer<ClipFrame> callback) throws Exception {
-        user.getModel().setTool("sambert-zhishu-v1");
-        String tempFolder = ServerApplication.applicationContext.getEnvironment().getProperty("ai.tempfile.folder");
+    public GenerateClipVideoFlowWorker generateSpeech(String model) throws Exception {
+        return generateSpeech(model, clipFrame -> {
+        });
+    }
+
+    public GenerateClipVideoFlowWorker generateSpeech(String model, Consumer<ClipFrame> callback) throws Exception {
+        user.getModel().setTool(model);
         SpeechGenerationAPI speechAPI = ServerApplication.applicationContext.getBean("speechGenerationAPI", SpeechGenerationAPI.class);
         for (ClipFrame clipFrame : clipFrames) {
-            byte[] speechBytes = speechAPI.generate(user, clipFrame.getSpeechText(), chatUsage);
-            IOUtils.copy(new ByteArrayInputStream(speechBytes), new FileOutputStream(tempFolder + File.separatorChar + "flow" + File.separatorChar + clipFrame.getNo() + ".mp3"));
-            clipFrame.setAudio(speechBytes);
+//            byte[] speechBytes = speechAPI.generate(user, clipFrame.getSpeechText(), chatUsage);
+//            clipFrame.setAudio(speechBytes);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            IOUtils.copy(new FileInputStream("D:\\tempfile\\flow\\" + clipFrame.getNo() + ".mp3"), byteArrayOutputStream);
+            clipFrame.setAudio(byteArrayOutputStream.toByteArray());
             callback.accept(clipFrame);
         }
         return this;
+    }
+
+    public GenerateClipVideoFlowWorker generateSubtitles() throws Exception {
+        return generateSubtitles(clipFrame -> {
+        });
     }
 
     public GenerateClipVideoFlowWorker generateSubtitles(Consumer<ClipFrame> callback) throws Exception {
         SubtitleGenerator subtitleGenerator = new SubtitleGenerator();
         for (ClipFrame clipFrame : clipFrames) {
-            BufferedImage bufferedImage = ImageIO.read(new URL(clipFrame.getImageUrl()).openStream());
+//            BufferedImage bufferedImage = ImageIO.read(new URL(clipFrame.getImageUrl()).openStream());
+            BufferedImage bufferedImage = ImageIO.read(new FileInputStream("D:\\tempfile\\flow\\" + clipFrame.getNo() + ".png"));
             subtitleGenerator.drawCenteredWrappedText(
                     bufferedImage,
                     clipFrame.getSpeechText(),
@@ -109,11 +133,14 @@ public class GenerateClipVideoFlowWorker {
         return this;
     }
 
-    public GenerateClipVideoFlowWorker generateVideo(Consumer<ClipFrame> videoCallback, Consumer<ClipFrame> audioCallback) throws Exception {
-        VideoGenerator videoGenerator = new VideoGenerator();
-        String tempFolder = ServerApplication.applicationContext.getEnvironment().getProperty("ai.tempfile.folder");
-        File bgmAudioPath = new File(tempFolder + File.separatorChar + "flow" + File.separatorChar + "bgm.wav");
-        videoGenerator.generate(bgmAudioPath, clipFrames, outputFile, videoCallback, audioCallback);
+    public GenerateClipVideoFlowWorker generateVideo(InputStream bgmAudioSource) throws Exception {
+        return generateVideo(bgmAudioSource, clipFrame -> {
+        }, clipFrame -> {
+        });
+    }
+
+    public GenerateClipVideoFlowWorker generateVideo(InputStream bgmAudioSource, Consumer<ClipFrame> videoCallback, Consumer<ClipFrame> audioCallback) throws Exception {
+        new VideoGenerator().generate(bgmAudioSource, clipFrames, outputVideoFile, videoCallback, audioCallback);
         return this;
     }
 
@@ -126,6 +153,15 @@ public class GenerateClipVideoFlowWorker {
         String imageUrl;
         BufferedImage imageData;
         byte[] audio;
+
+        public ClipFrame() {
+        }
+
+        public ClipFrame(int no, String speechText, String imageUrl) {
+            this.no = no;
+            this.speechText = speechText;
+            this.imageUrl = imageUrl;
+        }
     }
 
 }

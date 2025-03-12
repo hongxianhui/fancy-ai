@@ -16,7 +16,7 @@ public class SubtitleGenerator {
 
         // 启用抗锯齿‌
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2d.setFont(new Font("微软雅黑", Font.BOLD, 32));
+        g2d.setFont(new Font("微软雅黑", Font.BOLD, 24));
 
         // 获取字体参数
         FontMetrics fm = g2d.getFontMetrics();
