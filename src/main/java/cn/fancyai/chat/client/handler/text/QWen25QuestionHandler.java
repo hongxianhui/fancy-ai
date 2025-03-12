@@ -4,10 +4,10 @@ import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.tools.ChatTool;
 import cn.fancyai.chat.objects.Question;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatOptions;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeCloudStore;
 import com.alibaba.cloud.ai.dashscope.rag.DashScopeStoreOptions;
 import com.alibaba.dashscope.exception.NoApiKeyException;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
@@ -28,7 +28,6 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @Order(520)
@@ -41,11 +40,14 @@ public class QWen25QuestionHandler extends AbstractStreamingTextQuestionHandler 
     private final McpSyncClient mcpClient;
 
     public QWen25QuestionHandler(
-            @Value("${ai.mcp.command-path:C:\\Users\\Administrator\\.local\\bin\\uvx}")
+            @Value("${ai.mcp.command-path:}")
             String commandPath,
-            @Value("${ai.mcp.database-path:D:\\sqllite\\mcp.db}")
+            @Value("${ai.mcp.database-path:}")
             String databasePath
     ) {
+        if (Strings.isBlank(commandPath) || Strings.isBlank(databasePath)) {
+            return;
+        }
         ServerParameters stdioParams = ServerParameters.builder(commandPath)
                 .args("mcp-server-sqlite", "--db-path", databasePath)
                 .build();
