@@ -8,13 +8,12 @@ import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.objects.APIUser;
 import cn.fancyai.chat.objects.ChatUsage;
 import cn.fancyai.chat.objects.User;
+import jakarta.annotation.Resource;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -31,6 +30,9 @@ public class GenerateClipVideoFlowWorker {
     private String videoPlan;
     private List<ClipFrame> clipFrames;
     private final ChatUsage chatUsage = ChatUsage.builder().build();
+
+    @Resource
+    private SpeechGenerationAPI speechAPI;
 
     public GenerateClipVideoFlowWorker(User user, String prompt, File outputVideoFile) {
         this.prompt = prompt;
@@ -82,8 +84,8 @@ public class GenerateClipVideoFlowWorker {
         user.getModel().setTool(model);
         ImageGenerationAPI imageAPI = ServerApplication.applicationContext.getBean("imageGenerationAPI", ImageGenerationAPI.class);
         for (ClipFrame clipFrame : clipFrames) {
-//            String imageUrl = imageAPI.generate(user, clipFrame.getImagePrompt(), chatUsage);
-//            clipFrame.setImageUrl(imageUrl);
+            String imageUrl = imageAPI.generate(user, clipFrame.getImagePrompt(), chatUsage);
+            clipFrame.setImageUrl(imageUrl);
             callback.accept(clipFrame);
         }
         return this;
@@ -98,11 +100,8 @@ public class GenerateClipVideoFlowWorker {
         user.getModel().setTool(model);
         SpeechGenerationAPI speechAPI = ServerApplication.applicationContext.getBean("speechGenerationAPI", SpeechGenerationAPI.class);
         for (ClipFrame clipFrame : clipFrames) {
-//            byte[] speechBytes = speechAPI.generate(user, clipFrame.getSpeechText(), chatUsage);
-//            clipFrame.setAudio(speechBytes);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            IOUtils.copy(new FileInputStream("D:\\tempfile\\flow\\" + clipFrame.getNo() + ".mp3"), byteArrayOutputStream);
-            clipFrame.setAudio(byteArrayOutputStream.toByteArray());
+            byte[] speechBytes = speechAPI.generate(user, clipFrame.getSpeechText(), chatUsage);
+            clipFrame.setAudio(speechBytes);
             callback.accept(clipFrame);
         }
         return this;

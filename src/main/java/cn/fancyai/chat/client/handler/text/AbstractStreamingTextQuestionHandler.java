@@ -73,14 +73,17 @@ public abstract class AbstractStreamingTextQuestionHandler implements QuestionHa
         logger.info("Handle question: {}::{}", getClass().getSimpleName(), getModelName());
         //ChatOptions
         List<FunctionCallback> functionCallbacks = additionalFunctions(question);
-        DashScopeChatOptions.DashscopeChatOptionsBuilder chatOptionsBuilder = DashScopeChatOptions.builder()
+        DashScopeChatOptions.DashscopeChatOptionsBuilder optionsBuilder = DashScopeChatOptions.builder()
                 .withModel(getModelName())
                 .withIncrementalOutput(true)
                 .withFunctionCallbacks(functionCallbacks)
-                .withFunctions(functionCallbacks.stream().map(FunctionCallback::getName).collect(Collectors.toSet()));
-        customizeChatOperations(question, chatOptionsBuilder);
+                .withFunctions(functionCallbacks.stream()
+                        .map(FunctionCallback::getName)
+                        .collect(Collectors.toSet()));
+        customizeChatOperations(question, optionsBuilder);
         //ChatModel
-        ChatModel chatModel = new DashScopeChatModel(new DashScopeApi(getAPIKey(question)), chatOptionsBuilder.build());
+        ChatModel chatModel = new DashScopeChatModel(new DashScopeApi(getAPIKey(question)),
+                optionsBuilder.build());
         //Advisors
         List<Advisor> advisors = new ArrayList<>();
         advisors.add(MessageChatMemoryAdvisor.builder(chatMemory)
@@ -94,7 +97,8 @@ public abstract class AbstractStreamingTextQuestionHandler implements QuestionHa
                 .defaultAdvisors(advisors)
                 .build();
         //Call
-        chatClient.prompt(new Prompt(question.getContent())).stream().chatResponse().subscribe(chatResponse -> {
+        chatClient.prompt(new Prompt(question.getContent()))
+                .stream().chatResponse().subscribe(chatResponse -> {
             Answer answer = getAnswerOnStream(chatResponse, question, context);
             if (answer == null) {
                 return;

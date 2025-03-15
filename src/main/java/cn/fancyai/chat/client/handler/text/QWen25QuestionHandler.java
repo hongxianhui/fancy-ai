@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -46,6 +47,7 @@ public class QWen25QuestionHandler extends AbstractStreamingTextQuestionHandler 
             String databasePath
     ) {
         if (Strings.isBlank(commandPath) || Strings.isBlank(databasePath)) {
+            mcpClient = null;
             return;
         }
         ServerParameters stdioParams = ServerParameters.builder(commandPath)
@@ -86,6 +88,10 @@ public class QWen25QuestionHandler extends AbstractStreamingTextQuestionHandler 
         functionCallbacks.addAll(super.additionalFunctions(question));
         functionCallbacks.addAll(ChatTool.generateFunctionCallbacks());
         if (question.getContent().contains("调用数据库")) {
+            if (mcpClient == null) {
+                ChatUtils.sendMessage(question.getUser(), "MCP服务未启动");
+                return Collections.EMPTY_LIST;
+            }
             functionCallbacks.addAll(mcpClient.listTools(null)
                     .tools()
                     .stream()

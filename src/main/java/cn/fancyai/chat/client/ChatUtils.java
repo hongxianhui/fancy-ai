@@ -78,7 +78,7 @@ public class ChatUtils {
         return apiKey;
     }
 
-    public static void sendMessage(User user, String message) throws IOException {
+    public static void sendMessage(User user, String message) {
         sendMessage(user, message, Answer.TYPE_ANSWER);
     }
 

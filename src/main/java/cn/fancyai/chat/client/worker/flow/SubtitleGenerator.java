@@ -11,7 +11,8 @@ import java.util.List;
 
 public class SubtitleGenerator {
 
-    public void drawCenteredWrappedText(BufferedImage image, String subtitleText, int centerY, int maxWidth, int borderPadding, int bgPadding) {
+    public void drawCenteredWrappedText(BufferedImage image, String subtitleText, int centerY
+            , int maxWidth, int borderPadding, int bgPadding) {
         Graphics2D g2d = image.createGraphics();
 
         // 启用抗锯齿‌
@@ -53,9 +54,6 @@ public class SubtitleGenerator {
         }
     }
 
-    /**
-     * 智能分割文本为多行（保持行宽均匀）
-     */
     private List<String> splitTextToLines(Graphics2D g2d, String text, int maxWidth) {
         List<String> lines = new ArrayList<>();
         FontMetrics fm = g2d.getFontMetrics();
@@ -80,9 +78,6 @@ public class SubtitleGenerator {
         return lines;
     }
 
-    /**
-     * 查找最佳换行点（保持行宽均匀）
-     */
     private int findBestBreakPoint(String text, int start, int maxWidth, FontMetrics fm) {
         int textLength = text.length();
         int bestBreak = start;
@@ -108,9 +103,6 @@ public class SubtitleGenerator {
         return textLength;
     }
 
-    /**
-     * 判断是否允许换行的字符（中文通常任意位置可换行）
-     */
     private boolean isBreakCharacter(char c) {
         // 中文不需要特殊处理，默认每个字符都可换行
         return true;

@@ -4,7 +4,6 @@ import cn.fancyai.chat.ServerApplication;
 import cn.fancyai.chat.client.ChatUtils;
 import cn.fancyai.chat.client.handler.HandlerContext;
 import cn.fancyai.chat.client.handler.QuestionHandler;
-import cn.fancyai.chat.client.handler.exception.ChatExceptionConsumer;
 import cn.fancyai.chat.client.worker.flow.GenerateClipVideoFlowWorker;
 import cn.fancyai.chat.objects.Answer;
 import cn.fancyai.chat.objects.Question;
@@ -18,7 +17,6 @@ import org.springframework.web.socket.TextMessage;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Map;
 
 @Component()
@@ -60,14 +58,10 @@ public class ClipVideoFlowQuestionHandler implements QuestionHandler {
         ChatUtils.sendMessage(user, "\n\n第五步：渲染视频流\n");
         File bgmAudioFile = getFileFromTempFolder(BGM_AUDIO_FILENAME);
         worker.generateVideo(new FileInputStream(bgmAudioFile), clipFrame -> {
-            try {
-                String text = "场景#" + clipFrame.getNo() + "  ";
-                ChatUtils.sendMessage(user, text, Answer.TYPE_FLOW);
-                if (clipFrame.getNo() >= 6) {
-                    ChatUtils.sendMessage(user, "\n\n第六步：渲染音频流\n");
-                }
-            } catch (IOException e) {
-                new ChatExceptionConsumer(user).accept(e);
+            String text = "场景#" + clipFrame.getNo() + "  ";
+            ChatUtils.sendMessage(user, text, Answer.TYPE_FLOW);
+            if (clipFrame.getNo() >= 6) {
+                ChatUtils.sendMessage(user, "\n\n第六步：渲染音频流\n");
             }
         }, clipFrame -> {
             String text = "场景#" + clipFrame.getNo() + "  ";
